@@ -1,0 +1,32 @@
+import { expect, test } from "@playwright/test";
+
+test("analyzes a mock ticker and navigates every result section", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByLabel("ชื่อย่อหุ้น").fill("FN");
+  await page.getByRole("button", { name: "วิเคราะห์" }).click();
+
+  await expect(page.getByRole("heading", { name: "Fabrinet" })).toBeVisible();
+  await expect(page.getByText("ข้อมูลจำลอง")).toBeVisible();
+
+  for (const tab of ["กราฟ", "พื้นฐาน", "ความเสี่ยง", "สรุป", "ภาพรวม"]) {
+    await page.getByRole("tab", { name: tab }).click();
+    await expect(page.getByRole("tab", { name: tab })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+  }
+});
+
+test("keeps the mobile layout inside the viewport", async ({ page }) => {
+  await page.goto("/");
+  const documentWidth = await page.evaluate(
+    () => document.documentElement.scrollWidth,
+  );
+  const viewportWidth = await page.evaluate(
+    () => document.documentElement.clientWidth,
+  );
+
+  expect(documentWidth).toBeLessThanOrEqual(viewportWidth);
+});

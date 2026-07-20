@@ -1,0 +1,41 @@
+.shell {
+  width: min(100%, var(--content-width));
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 18px 16px 108px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.brandText {
+  display: grid;
+  gap: 1px;
+}
+
+.brandText strong {
+  font-size: 1.08rem;
+  letter-spacing: -0.03em;
+}
+
+.brandText span {
+  color: var(--ink-muted);
+  font-size: 0.72rem;
+}
+
+@media (min-width: 760px) {
+  .shell {
+    padding: 28px 28px 126px;
+  }
+}

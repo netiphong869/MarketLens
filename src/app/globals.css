@@ -1,0 +1,81 @@
+:root {
+  --canvas: #f6f8fb;
+  --surface: #ffffff;
+  --surface-soft: #eef3f8;
+  --ink: #172033;
+  --ink-muted: #667085;
+  --line: #dce3ec;
+  --primary: #145da0;
+  --primary-soft: #e7f1fb;
+  --positive: #168f68;
+  --positive-soft: #e9f6f1;
+  --warning: #a86f08;
+  --warning-soft: #fff6dc;
+  --risk: #c8571c;
+  --risk-soft: #fff0e7;
+  --critical: #b8323a;
+  --critical-soft: #ffebed;
+  --missing: #7b8797;
+  --shadow-soft: 0 12px 32px rgb(25 50 80 / 8%);
+  --radius-card: 20px;
+  --radius-control: 14px;
+  --content-width: 1180px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: var(--canvas);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  overflow-x: hidden;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 8% 0%, rgb(20 93 160 / 8%), transparent 28rem),
+    var(--canvas);
+  font-family: "Noto Sans Thai", var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+:focus-visible {
+  outline: 3px solid rgb(20 93 160 / 35%);
+  outline-offset: 3px;
+}
+
+::selection {
+  color: var(--ink);
+  background: #cfe7ff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

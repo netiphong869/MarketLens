@@ -1,0 +1,210 @@
+.card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.cardEditorial {
+  padding: 24px;
+}
+
+.cardMetric {
+  padding: 18px;
+}
+
+.badge {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.tonePrimary {
+  color: var(--primary);
+  background: var(--primary-soft);
+  border-color: rgb(20 93 160 / 18%);
+}
+
+.tonePositive {
+  color: var(--positive);
+  background: var(--positive-soft);
+  border-color: rgb(22 143 104 / 18%);
+}
+
+.toneWarning {
+  color: var(--warning);
+  background: var(--warning-soft);
+  border-color: rgb(168 111 8 / 18%);
+}
+
+.toneRisk {
+  color: var(--risk);
+  background: var(--risk-soft);
+  border-color: rgb(200 87 28 / 18%);
+}
+
+.toneCritical {
+  color: var(--critical);
+  background: var(--critical-soft);
+  border-color: rgb(184 50 58 / 18%);
+}
+
+.toneMuted {
+  color: var(--missing);
+  background: var(--surface-soft);
+  border-color: var(--line);
+}
+
+.button {
+  min-height: 44px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  padding: 10px 16px;
+  cursor: pointer;
+  font-weight: 750;
+  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+.buttonPrimary {
+  color: #ffffff;
+  background: var(--primary);
+  box-shadow: 0 8px 20px rgb(20 93 160 / 22%);
+}
+
+.buttonSecondary {
+  color: var(--ink);
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+.buttonGhost {
+  color: var(--primary);
+  background: transparent;
+}
+
+.ring {
+  --score: 0;
+  --ring-color: var(--primary);
+  position: relative;
+  display: grid;
+  width: var(--ring-size, 136px);
+  aspect-ratio: 1;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: conic-gradient(var(--ring-color) calc(var(--score) * 1%), #e6ebf1 0);
+}
+
+.ring::before {
+  position: absolute;
+  width: 76%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--surface);
+  content: "";
+}
+
+.ringContent {
+  position: relative;
+  display: grid;
+  gap: 1px;
+  place-items: center;
+  text-align: center;
+}
+
+.ringScore {
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-size: clamp(1.45rem, 5vw, 2rem);
+  font-weight: 760;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.06em;
+}
+
+.ringLabel,
+.ringLevel {
+  color: var(--ink-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.meter {
+  display: grid;
+  gap: 8px;
+}
+
+.meterHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.meterTrack {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e7ebf0;
+}
+
+.meterFill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--risk);
+}
+
+.state {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  padding: 24px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-card);
+  color: var(--ink-muted);
+  background: rgb(255 255 255 / 62%);
+}
+
+.state h2,
+.state p {
+  margin: 0;
+}
+
+.state h2 {
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+.stateIcon {
+  color: var(--primary);
+}
+
+.skeleton {
+  overflow: hidden;
+  min-height: 16px;
+  border-radius: 9px;
+  background: linear-gradient(90deg, #e8edf3 25%, #f5f7fa 50%, #e8edf3 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.3s infinite linear;
+}
+
+@keyframes shimmer {
+  to {
+    background-position-x: -200%;
+  }
+}
