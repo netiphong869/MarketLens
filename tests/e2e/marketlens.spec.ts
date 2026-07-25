@@ -7,8 +7,13 @@ test("analyzes a mock ticker and navigates every result section", async ({
   await page.getByLabel("ชื่อย่อหุ้น").fill("FN");
   await page.getByRole("button", { name: "วิเคราะห์" }).click();
 
-  await expect(page.getByRole("heading", { name: "Fabrinet" })).toBeVisible();
-  await expect(page.getByText("ข้อมูลจำลอง")).toBeVisible();
+  const companyProfile = page.locator("section").filter({
+    has: page.getByRole("heading", { name: "Fabrinet" }),
+  });
+  await expect(
+    companyProfile.getByRole("heading", { name: "Fabrinet" }),
+  ).toBeVisible();
+  await expect(companyProfile.getByText("ข้อมูลจำลอง")).toBeVisible();
 
   for (const tab of ["กราฟ", "พื้นฐาน", "ความเสี่ยง", "สรุป", "ภาพรวม"]) {
     await page.getByRole("tab", { name: tab }).click();

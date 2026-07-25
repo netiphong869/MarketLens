@@ -6,17 +6,60 @@ import { AnalysisDashboard } from "@/features/analysis/analysis-dashboard";
 import { makeAnalysisResponse } from "@/test/fixtures";
 
 describe("AnalysisDashboard", () => {
+  it("shows live data status when the server health route reports live mode", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ok: true,
+          mode: "live",
+          time: "2026-07-25T06:00:00.000Z",
+        }),
+        { status: 200 },
+      ),
+    );
+
+    render(<AnalysisDashboard analyze={vi.fn()} />);
+
+    expect(await screen.findByText("Live Mode")).toBeVisible();
+    expect(screen.queryByText("Mock Mode")).not.toBeInTheDocument();
+    fetchMock.mockRestore();
+  });
+
   it("uses the server analysis route by default", async () => {
     const response = makeAnalysisResponse();
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ data: response, cached: false, usage: { used: 1, remaining: 9, limit: 10 } }), { status: 200 }),
-    );
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(async (input) => {
+        if (input === "/api/health") {
+          return new Response(
+            JSON.stringify({
+              ok: true,
+              mode: "mock",
+              time: "2026-07-25T06:00:00.000Z",
+            }),
+            { status: 200 },
+          );
+        }
+        return new Response(
+          JSON.stringify({
+            data: response,
+            cached: false,
+            usage: { used: 1, remaining: 9, limit: 10 },
+          }),
+          { status: 200 },
+        );
+      });
     const user = userEvent.setup();
     render(<AnalysisDashboard />);
     await user.type(screen.getByLabelText("ชื่อย่อหุ้น"), "FN");
     await user.click(screen.getByRole("button", { name: "วิเคราะห์" }));
-    expect(await screen.findByRole("heading", { name: "Fabrinet" })).toBeVisible();
-    expect(fetchMock).toHaveBeenCalledWith("/api/analyze", expect.objectContaining({ method: "POST" }));
+    expect(
+      await screen.findByRole("heading", { name: "Fabrinet" }),
+    ).toBeVisible();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/analyze",
+      expect.objectContaining({ method: "POST" }),
+    );
     fetchMock.mockRestore();
   });
 
@@ -25,7 +68,9 @@ describe("AnalysisDashboard", () => {
     const user = userEvent.setup();
     render(<AnalysisDashboard analyze={analyze} />);
 
-    expect(screen.getByRole("heading", { name: /มองหุ้นให้ครบทุกมุม/ })).toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: /มองหุ้นให้ครบทุกมุม/ }),
+    ).toBeVisible();
     await user.type(screen.getByLabelText("ชื่อย่อหุ้น"), "fn");
     await user.click(screen.getByRole("button", { name: "วิเคราะห์" }));
 
@@ -40,7 +85,9 @@ describe("AnalysisDashboard", () => {
     const user = userEvent.setup();
     render(<AnalysisDashboard analyze={analyze} initialSymbol="FN" />);
 
-    expect(await screen.findByRole("heading", { name: "Fabrinet" })).toBeVisible();
+    expect(
+      await screen.findByRole("heading", { name: "Fabrinet" }),
+    ).toBeVisible();
 
     const destinations = [
       ["กราฟ", "แผนราคาจำลอง"],
