@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { requestJson } from "@/lib/api/http";
+import { AppError } from "@/lib/errors/app-error";
 import { createTemplateSummary, validateSummaryNumbers } from "@/engine/summary/template-summary";
 import type { ProviderFetch } from "@/providers/contracts";
 import type { AnalysisResponse, AnalysisSummary } from "@/types/analysis";
@@ -29,7 +30,7 @@ export class GeminiProvider {
     summary: AnalysisSummary;
     source: "gemini" | "template";
     model: string | null;
-    failureCode?: "MODEL_DISCOVERY_FAILED" | "MODEL_GENERATION_FAILED" | "INVALID_OUTPUT";
+    failureCode?: "MODEL_DISCOVERY_FAILED" | "MODEL_GENERATION_FAILED" | "INVALID_OUTPUT" | "TIMEOUT";
     httpStatus: number | null;
   }> {
     const fallback = createTemplateSummary(input);
@@ -46,14 +47,17 @@ export class GeminiProvider {
     try {
       rawResponse = await requestJson<unknown>(
         `https://generativelanguage.googleapis.com/v1beta/${model}:generateContent`,
-        { method: "POST", fetchFn: this.fetchFn, timeoutMs: 12_000, headers: this.headers({ "content-type": "application/json" }), body: JSON.stringify({ contents: [{ parts: [{ text: prompt(input) }] }], generationConfig: { responseMimeType: "application/json", temperature: 0.1 } }) },
+        { method: "POST", fetchFn: this.fetchFn, retries: 0, timeoutMs: 25_000, headers: this.headers({ "content-type": "application/json" }), body: JSON.stringify({ contents: [{ parts: [{ text: prompt(input) }] }], generationConfig: { responseMimeType: "application/json", temperature: 0.1 } }) },
       );
     } catch (error) {
       return {
         summary: fallback,
         source: "template",
         model,
-        failureCode: "MODEL_GENERATION_FAILED",
+        failureCode:
+          error instanceof AppError && error.code === "REQUEST_TIMEOUT"
+            ? "TIMEOUT"
+            : "MODEL_GENERATION_FAILED",
         httpStatus: providerHttpStatus(error),
       };
     }
@@ -110,6 +114,7 @@ function providerHttpStatus(error: unknown): number | null {
   ) {
     return error.cause.providerStatus;
   }
+  if (error instanceof AppError) return error.status;
   return null;
 }
 

@@ -115,4 +115,35 @@ describe("GeminiProvider", () => {
     expect(result.httpStatus).toBe(200);
     expect(result.summary.overview).not.toContain("9999.99");
   });
+
+  it("reports a generation timeout once and preserves the discovered model", async () => {
+    const fetchFn = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            models: [
+              {
+                name: "models/gemini-stable-flash",
+                supportedGenerationMethods: ["generateContent"],
+              },
+            ],
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        ),
+      )
+      .mockRejectedValueOnce(new DOMException("timed out", "TimeoutError"));
+
+    const result = await new GeminiProvider("secret", fetchFn).summarize(
+      createMockAnalysisResponse("FN"),
+    );
+
+    expect(result).toMatchObject({
+      source: "template",
+      model: "models/gemini-stable-flash",
+      failureCode: "TIMEOUT",
+      httpStatus: 504,
+    });
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+  });
 });
