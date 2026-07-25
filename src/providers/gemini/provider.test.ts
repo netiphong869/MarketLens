@@ -86,7 +86,7 @@ describe("GeminiProvider", () => {
     );
 
     expect(result.source).toBe("template");
-    expect(result.model).toBeNull();
+    expect(result.model).toBe("models/gemini-stable-flash");
     expect(result.failureCode).toBe("MODEL_GENERATION_FAILED");
     expect(result.httpStatus).toBe(404);
   });
@@ -110,6 +110,9 @@ describe("GeminiProvider", () => {
       .mockResolvedValueOnce(new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify({ overview: "ราคา 9999.99", strengths: [], weaknesses: [], watchItems: [], scenarios: [], limitations: [], disclaimer: "x" }) }] } }] }), { status: 200, headers: { "content-type": "application/json" } }));
     const result = await new GeminiProvider("secret", fetchFn).summarize(createMockAnalysisResponse("FN"));
     expect(result.source).toBe("template");
+    expect(result.model).toBe("models/gemini-stable-flash");
+    expect(result.failureCode).toBe("INVALID_OUTPUT");
+    expect(result.httpStatus).toBe(200);
     expect(result.summary.overview).not.toContain("9999.99");
   });
 });

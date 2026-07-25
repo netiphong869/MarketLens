@@ -8,6 +8,12 @@ import styles from "@/features/analysis/analysis-dashboard.module.css";
 
 export function CompanyProfileCard({ analysis }: { analysis: AnalysisResponse }) {
   const positive = analysis.quote.changePercent >= 0;
+  const dataLabel =
+    analysis.mode === "mock"
+      ? "ข้อมูลจำลอง"
+      : analysis.mode === "partial"
+        ? "ข้อมูลจริงบางส่วน"
+        : "ข้อมูลจริง";
   return (
     <Card as="section" className={styles.profile}>
       <div className={styles.profileHeader}>
@@ -24,7 +30,7 @@ export function CompanyProfileCard({ analysis }: { analysis: AnalysisResponse })
         </div>
       </div>
       <div className={styles.statusStrip}>
-        <Badge tone="primary"><CircleCheck size={14} />ข้อมูลจำลอง</Badge>
+        <Badge tone="primary"><CircleCheck size={14} />{dataLabel}</Badge>
         <span className={styles.source}><Clock3 size={14} /> อัปเดต {new Date(analysis.generatedAt).toLocaleString("th-TH")}</span>
         <span className={styles.source}>แหล่งข้อมูล: {analysis.quote.provenance.provider}</span>
       </div>

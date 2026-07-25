@@ -5,9 +5,13 @@ import type { AnalysisResponse, AnalysisScenario } from "@/types/analysis";
 import styles from "@/features/analysis/analysis-dashboard.module.css";
 
 export function SummaryPanel({ analysis }: { analysis: AnalysisResponse }) {
+  const sourceLabel =
+    analysis.summarySource === "gemini" && analysis.summaryModel
+      ? `Gemini · ${analysis.summaryModel.replace(/^models\//, "")}`
+      : "Template Fallback";
   return (
     <div className={styles.dashboard}>
-      <Card as="article"><Badge tone="primary">สรุปจากกฎระบบ</Badge><h2 className={styles.sectionTitle}>MarketLens Insight</h2><p>{analysis.summary.overview}</p></Card>
+      <Card as="article"><Badge tone="primary">{sourceLabel}</Badge><h2 className={styles.sectionTitle}>MarketLens Insight</h2><p>{analysis.summary.overview}</p></Card>
       <div className={styles.twoColumn}><Card as="section"><h2 className={styles.sectionTitle}>จุดแข็ง</h2><List items={analysis.summary.strengths} /></Card><Card as="section"><h2 className={styles.sectionTitle}>จุดอ่อน</h2><List items={analysis.summary.weaknesses} /></Card></div>
       <Card as="section"><h2 className={styles.sectionTitle}>สิ่งที่ควรติดตาม</h2><List items={analysis.summary.watchItems} /></Card>
       <div className={styles.scenarioGrid}>{analysis.summary.scenarios.map((scenario) => <Scenario key={scenario.kind} scenario={scenario} />)}</div>

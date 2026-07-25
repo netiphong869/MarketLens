@@ -80,6 +80,23 @@ describe("AnalysisDashboard", () => {
     expect(screen.getByText("เหลือ 9 จาก 10 รอบ")).toBeVisible();
   });
 
+  it("labels a partial live analysis as real partial data, never mock data", async () => {
+    const response = makeAnalysisResponse({ mode: "partial" });
+    const analyze = vi.fn().mockResolvedValue(response);
+    const user = userEvent.setup();
+    render(<AnalysisDashboard analyze={analyze} initialSymbol="AAPL" />);
+
+    expect(
+      await screen.findByRole("heading", { name: "Fabrinet" }),
+    ).toBeVisible();
+    expect(screen.getByText("ข้อมูลจริงบางส่วน")).toBeVisible();
+    expect(screen.queryByText("ข้อมูลจำลอง")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("tab", { name: "กราฟ" }));
+    expect(screen.getByText("แผนราคา")).toBeVisible();
+    expect(screen.queryByText("แผนราคาจำลอง")).not.toBeInTheDocument();
+  });
+
   it("navigates the five result sections without running analysis again", async () => {
     const analyze = vi.fn().mockResolvedValue(makeAnalysisResponse());
     const user = userEvent.setup();

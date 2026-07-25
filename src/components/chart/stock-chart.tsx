@@ -11,7 +11,13 @@ import type { Candle } from "@/types/market";
 
 import styles from "@/features/analysis/analysis-dashboard.module.css";
 
-export function StockChart({ candles }: { candles: Candle[] }) {
+export function StockChart({
+  candles,
+  dataLabel,
+}: {
+  candles: Candle[];
+  dataLabel: string;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -33,5 +39,5 @@ export function StockChart({ candles }: { candles: Candle[] }) {
     return () => { observer.disconnect(); chart.remove(); };
   }, [candles]);
 
-  return <div className={styles.chartCanvas} ref={containerRef} role="img" aria-label="กราฟแท่งเทียนข้อมูลจำลอง" />;
+  return <div className={styles.chartCanvas} ref={containerRef} role="img" aria-label={`กราฟแท่งเทียน${dataLabel}`} />;
 }

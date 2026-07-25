@@ -42,17 +42,28 @@ export class GeminiProvider {
     if (!model) {
       return { summary: fallback, source: "template", model: null, failureCode: "MODEL_DISCOVERY_FAILED", httpStatus: null };
     }
+    let rawResponse: unknown;
     try {
-      const response = responseSchema.parse(await requestJson<unknown>(
+      rawResponse = await requestJson<unknown>(
         `https://generativelanguage.googleapis.com/v1beta/${model}:generateContent`,
         { method: "POST", fetchFn: this.fetchFn, timeoutMs: 12_000, headers: this.headers({ "content-type": "application/json" }), body: JSON.stringify({ contents: [{ parts: [{ text: prompt(input) }] }], generationConfig: { responseMimeType: "application/json", temperature: 0.1 } }) },
-      ));
-      const parsed = summarySchema.parse(JSON.parse(response.candidates[0].content.parts[0].text));
-      if (!validateSummaryNumbers(parsed, input)) return { summary: fallback, source: "template", model: null, failureCode: "INVALID_OUTPUT", httpStatus: null };
-      return { summary: parsed, source: "gemini", model, httpStatus: 200 };
+      );
     } catch (error) {
-      const status = providerHttpStatus(error);
-      return { summary: fallback, source: "template", model: null, failureCode: "MODEL_GENERATION_FAILED", httpStatus: status };
+      return {
+        summary: fallback,
+        source: "template",
+        model,
+        failureCode: "MODEL_GENERATION_FAILED",
+        httpStatus: providerHttpStatus(error),
+      };
+    }
+    try {
+      const response = responseSchema.parse(rawResponse);
+      const parsed = summarySchema.parse(JSON.parse(response.candidates[0].content.parts[0].text));
+      if (!validateSummaryNumbers(parsed, input)) return { summary: fallback, source: "template", model, failureCode: "INVALID_OUTPUT", httpStatus: 200 };
+      return { summary: parsed, source: "gemini", model, httpStatus: 200 };
+    } catch {
+      return { summary: fallback, source: "template", model, failureCode: "INVALID_OUTPUT", httpStatus: 200 };
     }
   }
 
