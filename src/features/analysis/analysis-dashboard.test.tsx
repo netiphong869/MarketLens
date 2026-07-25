@@ -117,4 +117,41 @@ describe("AnalysisDashboard", () => {
     expect(screen.queryByText("provider secret")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "ลองอีกครั้ง" })).toBeVisible();
   });
+
+  it("shows the sanitized provider error returned by the analysis route", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(async (input) => {
+        if (input === "/api/health") {
+          return new Response(
+            JSON.stringify({
+              ok: true,
+              mode: "live",
+              time: "2026-07-25T07:00:00.000Z",
+            }),
+            { status: 200 },
+          );
+        }
+        return new Response(
+          JSON.stringify({
+            error: {
+              code: "PROVIDER_RATE_LIMITED",
+              message: "ผู้ให้บริการจำกัดจำนวนการเรียกชั่วคราว",
+              retryable: false,
+            },
+          }),
+          { status: 429 },
+        );
+      });
+    const user = userEvent.setup();
+    render(<AnalysisDashboard />);
+
+    await user.type(screen.getByLabelText("ชื่อย่อหุ้น"), "AAPL");
+    await user.click(screen.getByRole("button", { name: "วิเคราะห์" }));
+
+    expect(
+      await screen.findByText("ผู้ให้บริการจำกัดจำนวนการเรียกชั่วคราว"),
+    ).toBeVisible();
+    fetchMock.mockRestore();
+  });
 });

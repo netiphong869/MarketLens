@@ -41,6 +41,19 @@ const healthResponseSchema = z.object({
   time: z.string(),
 });
 
+const apiErrorResponseSchema = z.object({
+  error: z.object({
+    code: z.string(),
+    message: z.string().min(1),
+    retryable: z.boolean(),
+  }),
+});
+
+const genericAnalysisError =
+  "ระบบไม่สามารถเตรียมข้อมูลได้ในขณะนี้ และยังไม่ได้หักรอบการใช้งาน";
+
+class SafeAnalysisError extends Error {}
+
 const defaultAnalyze: AnalyzeFunction = async (symbol) => {
   const response = await fetch("/api/analyze", {
     method: "POST",
@@ -50,7 +63,14 @@ const defaultAnalyze: AnalyzeFunction = async (symbol) => {
     },
     body: JSON.stringify({ symbol }),
   });
-  if (!response.ok) throw new Error("Analysis request failed");
+  if (!response.ok) {
+    const parsed = apiErrorResponseSchema.safeParse(
+      await response.json().catch(() => null),
+    );
+    throw new SafeAnalysisError(
+      parsed.success ? parsed.data.error.message : genericAnalysisError,
+    );
+  }
   return response.json() as Promise<ApiAnalysisResult>;
 };
 
@@ -75,12 +95,15 @@ export function AnalysisDashboard({
   const [healthMode, setHealthMode] = useState<HealthMode>("checking");
   const [remaining, setRemaining] = useState(10);
   const [lastSymbol, setLastSymbol] = useState<string | null>(null);
+  const [errorDescription, setErrorDescription] =
+    useState(genericAnalysisError);
   const initialized = useRef(false);
 
   const runAnalysis = useCallback(
     async (symbol: string) => {
       setState("loading");
       setActiveTab("overview");
+      setErrorDescription(genericAnalysisError);
       try {
         const result = await analyze(symbol);
         const apiResult: ApiAnalysisResult | null =
@@ -93,7 +116,10 @@ export function AnalysisDashboard({
             : (value) => Math.max(0, value - 1),
         );
         setState("success");
-      } catch {
+      } catch (error) {
+        if (error instanceof SafeAnalysisError) {
+          setErrorDescription(error.message);
+        }
         setState("error");
       }
     },
@@ -140,7 +166,7 @@ export function AnalysisDashboard({
       {state === "error" ? (
         <ErrorState
           title="วิเคราะห์ไม่สำเร็จ"
-          description="ระบบไม่สามารถเตรียมข้อมูลได้ในขณะนี้ และยังไม่ได้หักรอบการใช้งาน"
+          description={errorDescription}
           actionLabel="ลองอีกครั้ง"
           onAction={() =>
             lastSymbol ? void runAnalysis(lastSymbol) : setState("idle")
