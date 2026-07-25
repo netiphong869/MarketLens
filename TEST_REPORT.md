@@ -1,24 +1,31 @@
 # MarketLens Test Report
 
-วันที่: 2026-07-20
+วันที่: 2026-07-25
 
-คำสั่งตรวจขั้นสุดท้ายคือ `npm run verify` ซึ่งรวม lint, typecheck, Vitest, Playwright, production build และ secret scan ผลล่าสุดบันทึกใน `PROGRESS.md`
+## Verification รอบ Live Provider Stabilization
 
-ผลรอบสุดท้าย: 24 Test Files / 52 Tests ผ่าน, Secret Scanner regression 4/4 ผ่าน, Playwright 4/4 ผ่านทั้ง Mobile Chromium และ Desktop Chromium, Production Build ผ่าน และ Secret Scan หลัง commit ตรวจครบ 126 ไฟล์ปัจจุบัน, 1 reachable commit และ 126 history blobs
+- `npm run lint`: ผ่าน
+- `npm run typecheck`: ผ่าน
+- Vitest: 30 files / 68 tests ผ่าน
+- Secret scanner regression: 4/4 ผ่าน
+- Playwright: 4/4 ผ่านบน Mobile Chromium และ Desktop Chromium
+- Next.js 16.2.11 production build: ผ่าน
+- Secret scan: 136 current files, 3 reachable commits, 382 history blobs ผ่าน
 
-## Coverage by behavior
+## Regression coverage ที่เพิ่ม
 
-- Environment และ safe errors
-- Symbol validation, cache TTL, Bangkok daily usage reset, HTTP retry/timeout/size policy
-- Provider normalization: Twelve Data, Finnhub events, SEC Company Facts
-- Indicator: EMA, RSI, MACD, ADX, ATR, Bollinger, OBV
-- Scoring: bullish/neutral/missing/extreme debt/unsupported type/clamp/quality gate
-- Gemini numeric hallucination fallback
-- Manifest/cache policy/security headers
-- Component navigation/loading/error states
-- Mobile และ Desktop E2E critical flow
-- Secret ที่ถูกลบจาก working tree แต่ยังอยู่ใน Git history ต้องถูกตรวจพบ
-- `.env.*.local` ที่ force-track ต้องถูกปฏิเสธ และ `.env.example` แบบค่าว่างต้องผ่าน
-- `package-lock.json` ต้องถูกสแกน ไม่ถูกข้ามเป็น generated file
+- Gemini Models API discovery และ stable Flash selection
+- Gemini generateContent 404 ต้องใช้ Template Fallback
+- Gemini output เพิ่มตัวเลขใหม่ต้องใช้ Template Fallback
+- Finnhub credential อยู่ใน `X-Finnhub-Token` และไม่อยู่ใน URL
+- SEC Company Facts มากกว่า shared 1 MB ต้องอ่านได้
+- SEC Company Facts เกิน 6 MiB, non-JSON หรือ redirect ต้องถูกปฏิเสธ
+- Stooq CSV schema ที่ถูกต้องต้อง parse ได้
+- Stooq HTML challenge HTTP 200 ต้องถูกระบุ unavailable
+- Q=85 ต้องอธิบาย component ได้และไม่ปิดบัง Coverage ที่ขาด
+- Fundamental coverage คำนวณจาก field ที่มีจริง
+- Missing Market/News ไม่แสดงคะแนน 50
+- Horizon แสดง Partial/Insufficient โดยไม่มีคะแนนเมื่อ input ไม่ครบ
+- UI ไม่แสดง `50/100` ให้โมดูล unavailable
 
-Live provider contract testsใช้ mocked HTTP payload เท่านั้น จึงยังต้องทดสอบซ้ำด้วย API Key จริงใน Preview โดยไม่บันทึก key ลง repository
+Live AAPL/MSFT/LITE และ browser/runtime logs จะบันทึกเพิ่มหลัง Deploy Preview เท่านั้น

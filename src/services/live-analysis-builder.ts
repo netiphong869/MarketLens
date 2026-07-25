@@ -1,6 +1,6 @@
 import { analyzeSnapshot } from "@/engine/scoring/analysis-engine";
 import { createTemplateSummary } from "@/engine/summary/template-summary";
-import type { AnalysisResponse, PriceZone } from "@/types/analysis";
+import type { AnalysisResponse, PriceZone, ProviderIssue } from "@/types/analysis";
 import type { Candle, CompanyProfile, FinancialMetrics, MarketEvent, Quote, Timeframe } from "@/types/market";
 
 interface MarketProvider { getQuote(symbol: string): Promise<Quote>; getCandles(symbol: string, timeframe: Timeframe, outputSize?: number): Promise<Candle[]> }
@@ -18,17 +18,57 @@ export async function buildLiveAnalysis(symbol: string, dependencies: Dependenci
   const [fundamentalResult, eventResult] = await Promise.allSettled([dependencies.company.getFundamentals(symbol), dependencies.news.getEvents(symbol, from, to)]);
   const fundamentals = fundamentalResult.status === "fulfilled" ? fundamentalResult.value : null;
   const events = eventResult.status === "fulfilled" ? eventResult.value : [];
+  const providerIssues: ProviderIssue[] = [
+    ...(fundamentalResult.status === "rejected"
+      ? [providerIssue("SEC EDGAR", fundamentalResult.reason)]
+      : []),
+    ...(eventResult.status === "rejected"
+      ? [providerIssue("Finnhub", eventResult.reason)]
+      : []),
+  ];
   const mode = fundamentalResult.status === "rejected" || eventResult.status === "rejected" ? "partial" : "live";
   const scores = analyzeSnapshot({ symbol, quote, profile, candles, fundamentals, events });
   const { supports, resistances } = priceZones(candles["1d"]);
   const response: AnalysisResponse = {
     symbol, mode, generatedAt: new Date().toISOString(), quote, profile, candles, fundamentals, events, scores, supports, resistances,
-    summary: { overview: "", strengths: [], weaknesses: [], watchItems: [], scenarios: [], limitations: [], disclaimer: "" }, summarySource: "template",
+    summary: { overview: "", strengths: [], weaknesses: [], watchItems: [], scenarios: [], limitations: [], disclaimer: "" }, summarySource: "template", summaryModel: null, providerIssues,
     confidenceMessage: "ยังไม่มีข้อมูล Backtest และ Paper Trade เพียงพอสำหรับประเมินความมั่นใจเชิงสถิติ",
   };
   response.summary = createTemplateSummary(response);
   if (mode === "partial") response.summary.limitations.unshift("ผู้ให้บริการข้อมูลเสริมบางรายไม่พร้อมใช้งาน ผลลัพธ์นี้เป็นการวิเคราะห์บางส่วน");
   return response;
+}
+
+function providerIssue(
+  provider: ProviderIssue["provider"],
+  error: unknown,
+): ProviderIssue {
+  const code =
+    typeof error === "object" && error !== null && "code" in error
+      ? String(error.code)
+      : "";
+  if (code === "PROVIDER_AUTH_ERROR")
+    return { provider, code: "AUTH_ERROR", httpStatus: providerHttpStatus(error) ?? 401 };
+  if (code === "PROVIDER_RATE_LIMITED")
+    return { provider, code: "RATE_LIMITED", httpStatus: 429 };
+  if (code === "REQUEST_TIMEOUT")
+    return { provider, code: "TIMEOUT", httpStatus: null };
+  return { provider, code: "UNAVAILABLE", httpStatus: null };
+}
+
+function providerHttpStatus(error: unknown): number | null {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "cause" in error &&
+    typeof error.cause === "object" &&
+    error.cause !== null &&
+    "providerStatus" in error.cause &&
+    typeof error.cause.providerStatus === "number"
+  ) {
+    return error.cause.providerStatus;
+  }
+  return null;
 }
 
 function priceZones(candles: Candle[]): { supports: PriceZone[]; resistances: PriceZone[] } {

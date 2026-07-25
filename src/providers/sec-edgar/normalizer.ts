@@ -4,6 +4,28 @@ interface FactPoint { fy?: number; fp?: string; form?: string; filed?: string; e
 interface Concept { units?: Record<string, FactPoint[]> }
 interface CompanyFacts { facts?: { "us-gaap"?: Record<string, Concept> } }
 
+const requiredConcepts = [
+  "RevenueFromContractWithCustomerExcludingAssessedTax",
+  "Revenues",
+  "EarningsPerShareDiluted",
+  "GrossProfit",
+  "OperatingIncomeLoss",
+  "NetIncomeLoss",
+  "NetCashProvidedByUsedInOperatingActivities",
+  "PaymentsToAcquirePropertyPlantAndEquipment",
+  "EntityCommonStockSharesOutstanding",
+] as const;
+
+export function selectRequiredCompanyFacts(raw: unknown): CompanyFacts {
+  const source = (raw as CompanyFacts)?.facts?.["us-gaap"];
+  if (!source) return {};
+  const selected: Record<string, Concept> = {};
+  for (const concept of requiredConcepts) {
+    if (source[concept]) selected[concept] = source[concept];
+  }
+  return { facts: { "us-gaap": selected } };
+}
+
 export function normalizeCompanyFacts(raw: unknown, asOf = new Date().toISOString()): FinancialMetrics | null {
   const facts = (raw as CompanyFacts)?.facts?.["us-gaap"];
   if (!facts) return null;

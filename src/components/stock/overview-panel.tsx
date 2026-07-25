@@ -7,15 +7,14 @@ import styles from "@/features/analysis/analysis-dashboard.module.css";
 
 export function OverviewPanel({ analysis }: { analysis: AnalysisResponse }) {
   const horizons = analysis.scores.horizons;
-  if (!horizons) return <Card>ข้อมูลไม่เพียงพอสำหรับคะแนนตามระยะถือ</Card>;
   return (
     <div className={styles.dashboard}>
       <Card as="section">
         <h2 className={styles.sectionTitle}>คะแนนตามระยะถือ</h2>
         <div className={styles.scoreGrid}>
-          <ScoreRing score={horizons.short} label="1–3 วัน" level="รอการยืนยัน" tone="warning" size={122} />
-          <ScoreRing score={horizons.medium} label="1–4 สัปดาห์" level="ค่อนข้างดี" tone="positive" size={122} />
-          <ScoreRing score={horizons.long} label="6 เดือนขึ้นไป" level="แข็งแรง" tone="positive" size={122} />
+          <HorizonScore label="1–3 วัน" assessment={horizons.short} />
+          <HorizonScore label="1–4 สัปดาห์" assessment={horizons.medium} />
+          <HorizonScore label="6 เดือนขึ้นไป" assessment={horizons.long} />
         </div>
       </Card>
       <div className={styles.twoColumn}>
@@ -38,11 +37,82 @@ export function OverviewPanel({ analysis }: { analysis: AnalysisResponse }) {
         </Card>
       </div>
       <Card as="section">
+        <h2 className={styles.sectionTitle}>ความครอบคลุมของข้อมูล</h2>
+        <div className={styles.metricGrid}>
+          <CoverageMetric label="เทคนิค" value={analysis.scores.coverage.technical} />
+          <CoverageMetric label="พื้นฐาน" value={analysis.scores.coverage.fundamental} />
+          <CoverageMetric label="ตลาด" value={analysis.scores.coverage.market} />
+          <CoverageMetric label="ข่าว" value={analysis.scores.coverage.news} />
+        </div>
+      </Card>
+      <Card as="section">
         <h2 className={styles.sectionTitle}>สิ่งที่ระบบเห็นตอนนี้</h2>
         <p>{analysis.summary.overview}</p>
       </Card>
     </div>
   );
+}
+
+function HorizonScore({
+  label,
+  assessment,
+}: {
+  label: string;
+  assessment: AnalysisResponse["scores"]["horizons"]["short"];
+}) {
+  if (assessment.score === null) {
+    return (
+      <div className={styles.metric}>
+        <span className={styles.metricLabel}>{label}</span>
+        <span className={styles.metricValue}>
+          {assessment.status === "partial" ? "Partial" : "Insufficient"}
+        </span>
+        <small>
+          ขาด: {assessment.missingModules.map(thaiModule).join(", ")}
+        </small>
+      </div>
+    );
+  }
+  return (
+    <ScoreRing
+      score={assessment.score}
+      label={label}
+      level="ข้อมูลครบตามเกณฑ์"
+      tone="positive"
+      size={122}
+    />
+  );
+}
+
+function CoverageMetric({
+  label,
+  value,
+}: {
+  label: string;
+  value: AnalysisResponse["scores"]["coverage"]["technical"];
+}) {
+  const status =
+    value.status === "complete"
+      ? "ครบ"
+      : value.status === "partial"
+        ? "บางส่วน"
+        : "ไม่เพียงพอ";
+  return (
+    <div className={styles.metric}>
+      <span className={styles.metricLabel}>{label}</span>
+      <span className={styles.metricValue}>{Math.round(value.percent)}%</span>
+      <small>{status}</small>
+    </div>
+  );
+}
+
+function thaiModule(module: string): string {
+  return {
+    technical: "เทคนิค",
+    fundamental: "พื้นฐาน",
+    market: "ตลาด",
+    news: "ข่าว",
+  }[module] ?? module;
 }
 
 function Metric({ label, value, suffix = "/100", text }: { label: string; value: number | null; suffix?: string; text?: string }) {

@@ -38,6 +38,7 @@ export async function requestJson<T>(
           "ผู้ให้บริการจำกัดจำนวนการเรียกชั่วคราว",
           429,
           false,
+          { providerStatus: response.status },
         );
       }
       if (response.status === 401 || response.status === 403) {
@@ -46,6 +47,7 @@ export async function requestJson<T>(
           "ผู้ให้บริการปฏิเสธการยืนยันตัวตน",
           502,
           false,
+          { providerStatus: response.status },
         );
       }
       if (!response.ok) {
@@ -54,6 +56,7 @@ export async function requestJson<T>(
           "ผู้ให้บริการข้อมูลไม่พร้อมใช้งาน",
           502,
           response.status >= 500,
+          { providerStatus: response.status },
         );
         if (response.status < 500 || attempt === maxAttempts) throw error;
         finalError = error;

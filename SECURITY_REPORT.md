@@ -1,37 +1,60 @@
 # MarketLens Security Report
 
-วันที่: 2026-07-20
+วันที่: 2026-07-25
 
-## Controls ที่มีแล้ว
+## Provider controls
 
-- Third-party credentials อ่านจาก server environment เท่านั้น
-- Browser เรียกเฉพาะ `/api/analyze`
-- Zod validation และ allowlist สำหรับ symbol
-- Safe error response ไม่ส่ง stack trace, path หรือ provider secret
-- Timeout, response size limit และ retry สูงสุด 1 ครั้ง; ไม่ retry 401/403/429
-- Production CSP, HSTS, nosniff, frame denial, referrer และ permissions policy
-- Secret scan ตรวจทุก current file (รวม binary และ `package-lock.json`) และทุก blob ใน reachable Git history
-- Scanner ไม่พิมพ์ค่าลับที่ตรวจพบออก log แสดงเฉพาะตำแหน่งและประเภท
-- Gemini output schema และตรวจตัวเลขย้อนกับ structured input
-- PWA ไม่ cache API market data
+- Third-party credentials อยู่ใน server environment เท่านั้น
+- Finnhub ใช้ `X-Finnhub-Token`; URL ไม่มี token
+- Gemini ใช้ `x-goog-api-key`; URL ไม่มี key
+- Shared JSON client คงเพดาน 1 MB
+- SEC Company Facts มี exact host/protocol/path allowlist, timeout 12 วินาที, `redirect: error`, JSON content-type validation และ decompressed-size cap 6 MiB
+- SEC เลือกเฉพาะ XBRL fields ที่ระบบใช้ก่อน normalization
+- Stooq HTML challenge ไม่ถูกยอมรับเป็น backup data
+- Provider issues ถูก sanitize และไม่มี header/credential
+- Template Fallback ทำงานเมื่อ Gemini discovery/generation/output validation ล้มเหลว
 
-## Dependency audit
+## Dependency triage
 
-ใช้ `overrides.postcss` ที่รุ่นแก้ไขแล้ว หลังติดตั้ง `npm audit --audit-level=moderate` รายงาน 0 vulnerabilities โดยไม่ได้ใช้ `--force`
+Baseline `npm audit --json`: 11 High package nodes, 0 Critical
 
-## Git และข้อมูลส่วนตัว
+### Next.js security release
 
-- ก่อนสร้าง release commit repository ไม่มี commit เดิม จึงไม่มี historical secret ให้ล้าง; หลังสร้าง commit ได้สแกน 1 reachable commit และ 126 history blobs ผ่าน
-- ไม่พบ API key, token, password, secret assignment หรือ environment value จริง
-- ไม่พบชื่อบัญชี Windows, home path, เบอร์โทร หรืออีเมลจริงในไฟล์ที่จะเผยแพร่
-- `test@local.invalid` เป็น identity จำลองของ temporary repository ใน regression test
-- ไม่มี Git remote และไม่พบการ Push/Deploy ในรอบนี้
+อัปเกรด `next` และ `eslint-config-next` จาก 16.2.10 เป็น 16.2.11 แล้ว Advisory ต่อไปนี้ไม่ปรากฏใน audit หลังอัปเกรด:
 
-## Residual risks
+- GHSA-6gpp-xcg3-4w24
+- GHSA-m99w-x7hq-7vfj
+- GHSA-89xv-2m56-2m9x
+- GHSA-68g3-v927-f742
+- GHSA-4633-3j49-mh5q
+- GHSA-4c39-4ccg-62r3
+- GHSA-p9j2-gv94-2wf4
+- GHSA-q8wf-6r8g-63ch
+- GHSA-955p-x3mx-jcvp
 
-- In-memory usage limit ไม่ใช่ security boundary บน Serverless
-- CSP ต้องมี `unsafe-inline` สำหรับ Next.js static script/style; production ไม่มี `unsafe-eval`
-- API provider entitlement และ redistribution rights ต้องตรวจตามแพ็กเกจจริง
-- ต้องทดสอบ log/observability บน Preview เพื่อยืนยันว่า provider response ไม่ถูกบันทึกเกินจำเป็น
+### Residual advisory chains
 
-ไม่มี Critical security issue ที่ค้างอยู่สำหรับการเผยแพร่ source code ปัจจุบัน
+1. `GHSA-f88m-g3jw-g9cj` — Sharp/libvips, High
+   - Path: `next@16.2.11 > sharp@0.34.5`
+   - Type: optional production dependency
+   - Direct project `sharp@0.35.3` ปลอดจากช่วง advisory แต่ Next ยังติดตั้ง nested 0.34.5
+   - Exploitability: ลดลงเพราะ MarketLens ไม่ import `next/image`, `ImageResponse` หรือเรียก image optimization แต่ package ยังอยู่ใน production tree จึงถือเป็น residual High
+   - ไม่ force override ข้าม sharp 0.x major เพราะยังไม่มีหลักฐาน compatibility จาก Next.js
+
+2. `GHSA-mh99-v99m-4gvg` — brace-expansion DoS, High
+   - Paths: ESLint/config/plugins > minimatch > brace-expansion
+   - Type: dev dependency เท่านั้น
+   - Exploitability: ไม่ถูก bundle/deploy เป็น application runtime; มีผลต่อ local/CI lint หากป้อน glob ที่ไม่ไว้วางใจ
+   - `npm audit fix --dry-run` เสนอ ESLint major และ downgrade `eslint-config-next` ที่ไม่เหมาะกับ Next 16 จึงไม่ใช้ `--force`
+
+หลังอัปเกรดยังรายงาน 11 High package nodes แต่เกิดจาก 2 advisory chains ข้างต้น; `npm audit --omit=dev` เหลือ 2 High package nodes (`next`, `sharp`) และ 0 Critical
+
+## Secret verification
+
+- Secret scan ผ่าน 136 current files, 3 commits และ 382 history blobs
+- ไม่พบ API key, token, password หรือ environment value จริง
+- ไม่มี credential แสดงใน URL, response หรือรายงานนี้
+
+## Release position
+
+พร้อมสำหรับ Vercel Preview เพื่อทดสอบ live providers เท่านั้น ยังไม่อนุมัติ Production เพราะมี residual Sharp High และ durable rate limit ยังไม่มี

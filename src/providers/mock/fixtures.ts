@@ -150,7 +150,17 @@ export function createMockAnalysisResponse(symbol = "FN"): AnalysisResponse {
         warnings: ["ข้อมูลนี้เป็นข้อมูลจำลอง ไม่ใช่ข้อมูลตลาดจริง"],
         components: { freshness: 20, candles: 20, fundamentals: 14, traceability: 5 },
       },
-      horizons: { short: 59, medium: 65, long: 70 },
+      coverage: {
+        technical: { percent: 100, status: "complete", missing: [] },
+        fundamental: { percent: 92, status: "complete", missing: [] },
+        market: { percent: 100, status: "complete", missing: [] },
+        news: { percent: 100, status: "complete", missing: [] },
+      },
+      horizons: {
+        short: { score: 59, status: "available", missingModules: [] },
+        medium: { score: 65, status: "available", missingModules: [] },
+        long: { score: 70, status: "available", missingModules: [] },
+      },
     },
     supports: [
       { low: 455, high: 460, strength: 76, timeframe: "1d", kind: "support" },
@@ -174,6 +184,8 @@ export function createMockAnalysisResponse(symbol = "FN"): AnalysisResponse {
       disclaimer: "ใช้เพื่อการศึกษา ไม่ใช่คำแนะนำหรือคำสั่งซื้อขายหลักทรัพย์",
     },
     summarySource: "template",
+    summaryModel: null,
+    providerIssues: [],
     confidenceMessage: "ยังไม่มีข้อมูล Backtest และ Paper Trade เพียงพอ",
   };
 }

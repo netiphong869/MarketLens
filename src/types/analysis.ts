@@ -23,7 +23,7 @@ export interface ScoreReason {
 }
 
 export interface ScoreBreakdown {
-  score: number;
+  score: number | null;
   availableWeight: number;
   reasons: ScoreReason[];
   warnings: string[];
@@ -31,19 +31,43 @@ export interface ScoreBreakdown {
 }
 
 export interface QualityResult extends ScoreBreakdown {
+  score: number;
   stopped: boolean;
   missing: string[];
   conflicts: string[];
 }
 
 export interface RiskResult extends ScoreBreakdown {
+  score: number;
   penalty: 0 | 3 | 8 | 15 | 25;
 }
 
+export type CoverageStatus = "complete" | "partial" | "insufficient";
+export type HorizonStatus = "available" | "partial" | "insufficient";
+
+export interface ModuleCoverage {
+  percent: number;
+  status: CoverageStatus;
+  missing: string[];
+}
+
+export interface AnalysisCoverage {
+  technical: ModuleCoverage;
+  fundamental: ModuleCoverage;
+  market: ModuleCoverage;
+  news: ModuleCoverage;
+}
+
+export interface HorizonAssessment {
+  score: number | null;
+  status: HorizonStatus;
+  missingModules: Array<keyof AnalysisCoverage>;
+}
+
 export interface HorizonScores {
-  short: number;
-  medium: number;
-  long: number;
+  short: HorizonAssessment;
+  medium: HorizonAssessment;
+  long: HorizonAssessment;
 }
 
 export interface PriceZone {
@@ -72,6 +96,19 @@ export interface AnalysisSummary {
   disclaimer: string;
 }
 
+export interface ProviderIssue {
+  provider: "SEC EDGAR" | "Finnhub" | "Gemini" | "Stooq";
+  code:
+    | "AUTH_ERROR"
+    | "RATE_LIMITED"
+    | "TIMEOUT"
+    | "UNAVAILABLE"
+    | "MODEL_DISCOVERY_FAILED"
+    | "MODEL_GENERATION_FAILED"
+    | "INVALID_OUTPUT";
+  httpStatus: number | null;
+}
+
 export interface AnalysisResponse {
   symbol: string;
   mode: "mock" | "live" | "partial";
@@ -88,11 +125,14 @@ export interface AnalysisResponse {
     events: ScoreBreakdown;
     risk: RiskResult;
     quality: QualityResult;
-    horizons: HorizonScores | null;
+    coverage: AnalysisCoverage;
+    horizons: HorizonScores;
   };
   supports: PriceZone[];
   resistances: PriceZone[];
   summary: AnalysisSummary;
   summarySource: "gemini" | "template";
+  summaryModel?: string | null;
+  providerIssues: ProviderIssue[];
   confidenceMessage: string;
 }

@@ -3,9 +3,10 @@ import type { AnalysisResponse, AnalysisSummary, ScoreLevel } from "@/types/anal
 export function createTemplateSummary(input: AnalysisResponse): AnalysisSummary {
   const horizons = input.scores.horizons;
   const fundamental = input.scores.fundamental;
-  const overview = horizons
-    ? `${input.symbol} มีภาพรวมระยะสั้น${thaiLevel(level(horizons.short))} ขณะที่พื้นฐาน${fundamental ? thaiLevel(level(fundamental.score)) : "ยังมีข้อมูลไม่เพียงพอ"} และต้องพิจารณาความเสี่ยงร่วมกัน`
-    : `${input.symbol} ยังไม่สามารถสรุปคะแนนปลายทางได้ เนื่องจากคุณภาพข้อมูลไม่ผ่านเกณฑ์`;
+  const overview =
+    horizons.short.score !== null
+      ? `${input.symbol} มีภาพรวมระยะสั้น${thaiLevel(level(horizons.short.score))} ขณะที่พื้นฐาน${fundamental?.score !== null && fundamental?.score !== undefined ? thaiLevel(level(fundamental.score)) : "ยังมีข้อมูลไม่เพียงพอ"} และต้องพิจารณาความเสี่ยงร่วมกัน`
+      : `${input.symbol} มีข้อมูลสำหรับวิเคราะห์เพียงบางส่วน จึงแสดง Coverage และสถานะ ${horizons.short.status} แทนคะแนนปลายทาง`;
   const strengths = [...input.scores.technical.reasons, ...(fundamental?.reasons ?? []), ...input.scores.events.reasons]
     .filter((reason) => reason.impact > 0).slice(0, 4).map((reason) => reason.label);
   const weaknesses = [...input.scores.technical.reasons, ...(fundamental?.reasons ?? []), ...input.scores.risk.reasons]

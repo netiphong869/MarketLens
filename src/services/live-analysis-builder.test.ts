@@ -19,6 +19,13 @@ describe("buildLiveAnalysis", () => {
     const result = await buildLiveAnalysis("FN", { market: { getQuote: async () => fixture.quote, getCandles: async (_symbol: string, frame: keyof typeof fixture.candles) => fixture.candles[frame] }, company: { getProfile: async () => fixture.profile, getFundamentals: async () => { throw new Error("SEC down"); } }, news: { getEvents: async () => { throw new Error("news down"); } } });
     expect(result.mode).toBe("partial");
     expect(result.fundamentals).toBeNull();
+    expect(result.providerIssues).toEqual([
+      { provider: "SEC EDGAR", code: "UNAVAILABLE", httpStatus: null },
+      { provider: "Finnhub", code: "UNAVAILABLE", httpStatus: null },
+    ]);
+    expect(result.scores.coverage.fundamental.percent).toBe(0);
+    expect(result.scores.coverage.news.percent).toBe(0);
+    expect(result.scores.horizons.medium.status).toBe("insufficient");
     expect(result.summary.limitations.length).toBeGreaterThan(0);
   });
 });

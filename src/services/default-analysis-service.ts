@@ -58,6 +58,14 @@ export const defaultAnalysisService = new AnalysisService({
       );
       response.summary = generated.summary;
       response.summarySource = generated.source;
+      response.summaryModel = generated.model;
+      if (generated.failureCode) {
+        response.providerIssues.push({
+          provider: "Gemini",
+          code: generated.failureCode,
+          httpStatus: generated.httpStatus,
+        });
+      }
     }
     return response;
   },

@@ -11,22 +11,102 @@ const summarySchema = z.object({
   limitations: z.array(z.string()), disclaimer: z.string(),
 });
 const responseSchema = z.object({ candidates: z.array(z.object({ content: z.object({ parts: z.array(z.object({ text: z.string() })) }) })).min(1) });
+const modelsSchema = z.object({
+  models: z.array(
+    z.object({
+      name: z.string().startsWith("models/"),
+      supportedGenerationMethods: z.array(z.string()).default([]),
+    }),
+  ),
+});
 
 export class GeminiProvider {
+  private discoveredModel: string | null | undefined;
+
   constructor(private readonly apiKey: string, private readonly fetchFn: ProviderFetch = fetch) {}
 
-  async summarize(input: AnalysisResponse): Promise<{ summary: AnalysisSummary; source: "gemini" | "template" }> {
+  async summarize(input: AnalysisResponse): Promise<{
+    summary: AnalysisSummary;
+    source: "gemini" | "template";
+    model: string | null;
+    failureCode?: "MODEL_DISCOVERY_FAILED" | "MODEL_GENERATION_FAILED" | "INVALID_OUTPUT";
+    httpStatus: number | null;
+  }> {
     const fallback = createTemplateSummary(input);
+    let model: string | null;
+    try {
+      model = await this.discoverModel();
+    } catch {
+      return { summary: fallback, source: "template", model: null, failureCode: "MODEL_DISCOVERY_FAILED", httpStatus: null };
+    }
+    if (!model) {
+      return { summary: fallback, source: "template", model: null, failureCode: "MODEL_DISCOVERY_FAILED", httpStatus: null };
+    }
     try {
       const response = responseSchema.parse(await requestJson<unknown>(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(this.apiKey)}`,
-        { method: "POST", fetchFn: this.fetchFn, timeoutMs: 12_000, headers: { "content-type": "application/json" }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt(input) }] }], generationConfig: { responseMimeType: "application/json", temperature: 0.1 } }) },
+        `https://generativelanguage.googleapis.com/v1beta/${model}:generateContent`,
+        { method: "POST", fetchFn: this.fetchFn, timeoutMs: 12_000, headers: this.headers({ "content-type": "application/json" }), body: JSON.stringify({ contents: [{ parts: [{ text: prompt(input) }] }], generationConfig: { responseMimeType: "application/json", temperature: 0.1 } }) },
       ));
       const parsed = summarySchema.parse(JSON.parse(response.candidates[0].content.parts[0].text));
-      if (!validateSummaryNumbers(parsed, input)) return { summary: fallback, source: "template" };
-      return { summary: parsed, source: "gemini" };
-    } catch { return { summary: fallback, source: "template" }; }
+      if (!validateSummaryNumbers(parsed, input)) return { summary: fallback, source: "template", model: null, failureCode: "INVALID_OUTPUT", httpStatus: null };
+      return { summary: parsed, source: "gemini", model, httpStatus: 200 };
+    } catch (error) {
+      const status = providerHttpStatus(error);
+      return { summary: fallback, source: "template", model: null, failureCode: "MODEL_GENERATION_FAILED", httpStatus: status };
+    }
   }
+
+  private async discoverModel(): Promise<string | null> {
+    if (this.discoveredModel !== undefined) return this.discoveredModel;
+    const response = modelsSchema.parse(
+      await requestJson<unknown>(
+        "https://generativelanguage.googleapis.com/v1beta/models",
+        {
+          fetchFn: this.fetchFn,
+          timeoutMs: 8_000,
+          headers: this.headers(),
+        },
+      ),
+    );
+    const candidates = response.models
+      .filter(
+        (model) =>
+          model.supportedGenerationMethods.includes("generateContent") &&
+          /flash/i.test(model.name),
+      )
+      .sort(compareModels);
+    this.discoveredModel = candidates[0]?.name ?? null;
+    return this.discoveredModel;
+  }
+
+  private headers(extra: HeadersInit = {}): Headers {
+    const headers = new Headers(extra);
+    headers.set("x-goog-api-key", this.apiKey);
+    headers.set("Accept", "application/json");
+    return headers;
+  }
+}
+
+function providerHttpStatus(error: unknown): number | null {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "cause" in error &&
+    typeof error.cause === "object" &&
+    error.cause !== null &&
+    "providerStatus" in error.cause &&
+    typeof error.cause.providerStatus === "number"
+  ) {
+    return error.cause.providerStatus;
+  }
+  return null;
+}
+
+function compareModels(left: { name: string }, right: { name: string }): number {
+  const unstable = /preview|experimental|exp|latest/i;
+  const leftRank = unstable.test(left.name) ? 1 : 0;
+  const rightRank = unstable.test(right.name) ? 1 : 0;
+  return leftRank - rightRank || right.name.localeCompare(left.name);
 }
 
 function prompt(input: AnalysisResponse): string {

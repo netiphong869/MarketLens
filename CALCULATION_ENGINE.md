@@ -4,15 +4,23 @@
 
 ## Q — Data Quality
 
-- Freshness 20
-- Candle completeness 20
-- Corporate-action adjustment status 15
-- Cross-source consistency 15
-- Financial completeness/recency 15
-- Symbol/exchange/timezone/type 10
-- Traceable source/timestamp 5
+- Traceable source/structure 20
+- Candle completeness 60 (15 ต่อกรอบเวลาที่มีอย่างน้อย 50 แท่ง)
+- Financial coverage 15 (ปรับตามสัดส่วน field ที่คำนวณได้จริง)
+- Valid latest price 5
 
 `Q < 60` หยุด full conclusion และ entry/exit scenario; `60–74` วิเคราะห์พร้อมเตือน; `75+` ใช้ปกติ ความต่างราคาระหว่างแหล่งเกิน 1% เตือน และเกิน 2% หยุด technical score จนตรวจ session/split ได้
+
+Q วัดคุณภาพของข้อมูลที่มี ไม่ใช่ความครบของทุกโมดูล จึงต้องอ่านคู่กับ Coverage เสมอ ตัวอย่างข้อมูลราคาและแท่งเทียนครบ แต่ไม่มีงบ/ตลาด/ข่าว จะได้ Q=85 จาก 20+60+0+5 ขณะที่ Coverage ของ Fundamental, Market และ News เป็น 0% ห้ามตีความว่า Q=85 หมายถึงวิเคราะห์ครบ 85%
+
+## Coverage
+
+- Technical: สัดส่วน timeframe ที่คำนวณได้ตามน้ำหนัก 1D/4H/1H/15M
+- Fundamental: สัดส่วนน้ำหนัก field พื้นฐานที่มีค่าจริง
+- Market: ต้องมี market/sector context จริง
+- News: ต้องมีผลตอบกลับข่าวที่นำมาประเมินได้
+
+`complete` ตั้งแต่ 85%, `partial` มากกว่า 0% แต่น้อยกว่า 85%, และ `insufficient` เท่ากับ 0% ค่า unavailable ต้องเป็น `null` ไม่ใช้ 0 หรือ 50 แทน
 
 ## T — Technical
 
@@ -72,7 +80,13 @@ Medium = T*0.35 + M*0.20 + F*0.30 + E*0.15 - penalty
 Long   = F*0.60 + T*0.15 + M*0.10 + E*0.15 - penalty
 ```
 
-Clamp 0–100. Q และ Confidence ห้ามเป็นโบนัส หาก F ไม่รองรับ ต้องไม่แอบแทนเป็นศูนย์และต้องงด horizon ที่พึ่ง F จนกว่าสูตร degradation จะมี test/เอกสารรองรับ
+Clamp 0–100. Q และ Confidence ห้ามเป็นโบนัส
+
+- `available`: โมดูลที่สูตรใช้มี score และ coverage อย่างน้อย 50% ครบ
+- `partial`: โมดูลบังคับพร้อม แต่โมดูลประกอบบางส่วนขาด แสดงสถานะโดยไม่แสดงคะแนน
+- `insufficient`: โมดูลบังคับขาด แสดงสถานะโดยไม่แสดงคะแนน
+
+Short บังคับ Technical, Medium บังคับ Technical+Fundamental และ Long บังคับ Fundamental หาก F ไม่รองรับหรือ coverage ต่ำกว่า 50% ต้องไม่แอบแทนด้วยศูนย์หรือคะแนนกลาง
 
 ## Confidence
 

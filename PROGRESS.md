@@ -1,28 +1,26 @@
 # MarketLens Progress
 
-Last updated: 2026-07-20 (Asia/Bangkok)
+Last updated: 2026-07-25 (Asia/Bangkok)
 
-| Phase | Status | Verification | Local commit |
-|---|---|---|---|
-| 1 Foundation | Completed | lint, typecheck, 5 tests, build, diff-check passed | Commit blocked: author identity unknown |
-| 2 Design system | Completed | lint, typecheck, 12 tests, build passed | Uncommitted: Git identity absent |
-| 3 Application UI | Completed | lint, typecheck, 16 tests, 4 E2E, browser visual check, build passed | Uncommitted: Git identity absent |
-| 4 Providers/API | Completed | provider, route, cache, usage and live orchestration tests passed | Uncommitted: Git identity absent |
-| 5 Calculation engine | Completed | indicator/scoring/quality/risk edge-case tests passed | Uncommitted: Git identity absent |
-| 6 Gemini/fallback | Completed | schema and invented-number fallback tests passed | Uncommitted: Git identity absent |
-| 7 PWA/offline | Completed | manifest/cache policy/build passed | Uncommitted: Git identity absent |
-| 8 QA | Completed | 24 test files / 52 tests and 4 E2E scenarios passed | Uncommitted: Git identity absent |
-| 9 Final audit | Completed | lint, typecheck, tests, E2E, production build, secret scan and audit passed | Uncommitted: Git identity absent |
-| 10 GitHub release preparation | Completed | ignore audit, full-file/history secret scan, 52 Vitest + 4 scanner + 4 E2E, build and dependency audit passed | Included in local release-preparation commit |
+| Workstream | Status | Evidence |
+|---|---|---|
+| Live provider baseline | Completed | Preview env 6 names SET; Twelve Data works; Finnhub 401; SEC ~3.75 MB; Gemini model 404; Stooq HTML challenge |
+| Finnhub auth hardening | Completed locally | `X-Finnhub-Token` regression test |
+| Gemini model discovery | Completed locally | discovery, stable Flash selection, model 404 and hallucinated-number fallback tests |
+| SEC Company Facts boundary | Completed locally | >1 MB success, >6 MiB reject, JSON/content/redirect checks |
+| Coverage and horizon truthfulness | Completed locally | Q=85 explanation, module coverage, nullable unavailable scores, Partial/Insufficient horizons |
+| Stooq validation | Completed locally | real response identified as HTML challenge; parser rejects unusable backup |
+| Dependency triage | In progress | Next.js 16.2.11 installed; 11 High package nodes remain from 2 root advisory chains |
+| Local verification | Completed | lint, typecheck, 30 Vitest files/68 tests, scanner 4/4, E2E 4/4, build, secret scan |
+| Live Preview verification | Pending | ต้อง Commit/Push และ Deploy Preview หลังเอกสารพร้อม |
 
-## Environment notes
+## Local verification 2026-07-25
 
-- Repository initialized locally on branch `marketlens-v1`.
-- No Git remote exists.
-- Phase commitsเดิมถูกข้ามเพราะไม่มี Git identity; release-preparation commit ใช้ command-scoped identity `Codex <codex@local.invalid>` โดยไม่แก้ Git config ของเครื่อง
-- Dependency installation completed with two moderate advisories to review in Phase 9. No forced audit fix was applied.
-- PostCSS was safely overridden to 8.5.19; final `npm audit --audit-level=moderate` reports 0 vulnerabilities.
-- `.gitignore` ครอบคลุม build/test/cache/local env และ `.env.example` ยังติดตามได้
-- Secret scanner มี regression tests สำหรับ current tree, force-tracked env, package-lock และ secret ที่ถูกลบแต่ยังอยู่ใน reachable Git history
-- Release scan หลัง commit ตรวจครบ 126 ไฟล์ปัจจุบัน, 1 reachable commit และ 126 history blobs
-- No Git remote was created and no deployment was performed.
+- `npm run verify`: exit 0
+- Vitest: 30 files / 68 tests
+- Secret scanner regression: 4/4
+- Playwright: 4/4 mobile + desktop
+- Production build: Next.js 16.2.11 passed
+- Secret scan: 136 current files, 3 commits, 382 history blobs
+- Working branch: `main`
+- Production deployment: not performed
