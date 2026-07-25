@@ -1,5 +1,21 @@
 # MarketLens Security Report
 
+## Final security readiness snapshot
+
+- Preview Environment Variables: ทั้ง 6 ชื่อเป็น SET; ไม่ได้อ่านหรือแสดงค่าจริง
+- Finnhub credential ส่งด้วย `X-Finnhub-Token` เท่านั้นและใช้งานได้จริง
+- Gemini credential ส่งด้วย `x-goog-api-key`; model discovery พบ `models/gemini-3.6-flash`
+- Gemini output ที่เพิ่ม/ดัดแปลงตัวเลขถูกปฏิเสธและใช้ deterministic Template Fallback
+- SEC Company Facts ใช้เพดานเฉพาะ endpoint 6 MiB; shared JSON client ยังคง 1 MB
+- SEC boundary มี exact HTTPS host/path allowlist, redirect protection, timeout, JSON validation และ streamed decompressed-size cap
+- Stooq HTTP 200 ที่เป็น HTML browser challenge ถูกระบุ unavailable และไม่ได้ใช้เป็น backup
+- Runtime Logs และ Browser Console ไม่พบ secret
+- `npm audit --json`: 11 High, 0 Critical
+- `npm audit --omit=dev`: 2 High, 0 Critical จาก `next@16.2.11 > sharp@0.34.5`
+- `npm audit fix --dry-run`: ไม่มี safe non-breaking change และเสนอ major/downgrade ที่ไม่เหมาะสม จึงไม่ใช้ `--force`
+- Next.js เป็น 16.2.11 ซึ่งเป็น stable security release ล่าสุดที่ตรวจ ณ วันทำงาน
+- ยังไม่อนุมัติ Production จนกว่า Next.js จะรองรับ Sharp ที่พ้น advisory อย่างเป็นทางการ หรือมี compatibility evidence ที่เพียงพอ
+
 วันที่: 2026-07-25
 
 ## Provider controls

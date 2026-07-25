@@ -1,5 +1,22 @@
 # MarketLens Test Report
 
+## Final verification
+
+- `npm run lint`: ผ่าน
+- `npm run typecheck`: ผ่าน
+- Vitest: 32 files / 74 tests ผ่าน
+- Secret scanner regression: 4/4 ผ่าน
+- Playwright mobile + desktop: 4/4 ผ่าน
+- Next.js 16.2.11 production build: ผ่าน
+- Preview build: ผ่านและ Deployment `READY`
+- AAPL: Fundamental 72.92, News 50, Q 91.75, Coverage 100/45/0/100
+- MSFT: Fundamental 85.42, News 50, Q 91.75, Coverage 100/45/0/100
+- LITE: Fundamental 48.06, News 50, Q 90.81, Coverage 100/38.75/0/100
+- Gemini regression: discovery, 404, timeout, invalid numeric output และ Template Fallback ผ่าน
+- UI regression: live/partial data label และ Template Fallback badge ผ่าน
+- Browser console: 0 warning/error
+- Runtime logs: มีเฉพาะ request info; ไม่พบ server error
+
 วันที่: 2026-07-25
 
 ## Verification รอบ Live Provider Stabilization

@@ -1,5 +1,22 @@
 # MarketLens Final Audit
 
+## ผลตรวจขั้นสุดท้ายบน Preview
+
+สถานะ: **ผ่านสำหรับ Vercel Preview เท่านั้น และยังไม่อนุมัติ Production**
+
+- Preview URL: `https://marketlens-1f0lwziuy-netiphong869-s-projects.vercel.app`
+- Deployment เป็น `READY` และ target เป็น `preview`
+- `/api/health` ตอบ `mode=live`
+- AAPL, MSFT และ LITE วิเคราะห์สำเร็จโดยใช้ราคา Twelve Data, fundamentals จาก SEC และข่าว Finnhub
+- UI แสดง “ข้อมูลจริง” และสถานะ Partial/Insufficient ตาม Coverage จริง ไม่แสดง Mock Mode ผิด
+- Gemini Models API พบ `models/gemini-3.6-flash`; ผลที่ไม่ผ่าน numeric/schema validation หรือ upstream 503 ใช้ Template Fallback
+- Browser console ไม่มี warning/error และ Runtime Logs ไม่มี 5xx หรือ secret
+- `npm run verify` รอบสุดท้ายผ่าน: Vitest 32 ไฟล์ 74 tests, secret-scanner tests 4/4, E2E 4/4, build และ secret scan
+- `npm audit`: 11 High package nodes, 0 Critical; มาจาก Sharp production chain 2 nodes และ ESLint/brace-expansion dev-tooling chain 9 nodes
+- Critical issue: ไม่พบ แต่ residual High ทำให้ยังไม่อนุมัติ Production
+- GitHub Auto Deployment: ไม่ได้เชื่อม
+- Production deployment: ไม่ได้ดำเนินการ
+
 วันที่ตรวจ: 2026-07-25 (Asia/Bangkok)
 
 ## สถานะ

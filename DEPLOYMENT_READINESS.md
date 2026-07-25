@@ -1,5 +1,26 @@
 # MarketLens Deployment Readiness
 
+## Final Preview result
+
+- Project: `marketlens`
+- Framework: Next.js
+- Root Directory: `.`
+- Deployment: `dpl_2u3kSa3MHsrUPGH1nLy3xeTBRCGD`
+- Preview URL: `https://marketlens-1f0lwziuy-netiphong869-s-projects.vercel.app`
+- Status: `READY`
+- Target: `preview`
+- Health: `mode=live`
+- Live symbols verified: AAPL, MSFT, LITE
+- Finnhub: พร้อมใช้งาน ไม่ต้องเปลี่ยน Key
+- SEC fundamentals: พร้อมใช้งานแบบ partial coverage
+- Gemini: model เข้าถึงได้ แต่ยังใช้ Template Fallback เมื่อ safety validation ไม่ผ่านหรือ upstream 503
+- Market/Sector Coverage: 0% จึงยังไม่สร้างคะแนนระยะกลาง/ยาว
+- Stooq backup: unavailable
+- Browser console / Runtime logs: ไม่พบ error สำคัญหรือ secret
+- GitHub Auto Deployment: ไม่ได้เชื่อม
+- Production Deployment: ไม่ได้ดำเนินการ
+- Release decision: **Preview พร้อมใช้งานเพื่อทดสอบ; Production ยังไม่พร้อม**
+
 สถานะ: **พร้อมสำหรับ Vercel Preview เท่านั้น — ยังไม่อนุมัติ Production**
 
 ## Local gates ที่ผ่าน

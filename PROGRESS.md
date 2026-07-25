@@ -24,3 +24,22 @@ Last updated: 2026-07-25 (Asia/Bangkok)
 - Secret scan: 136 current files, 3 commits, 382 history blobs
 - Working branch: `main`
 - Production deployment: not performed
+
+## Final Preview verification 2026-07-25
+
+- Final code commit: `2a6fb9b`
+- Preview deployment: `dpl_2u3kSa3MHsrUPGH1nLy3xeTBRCGD`
+- Preview URL: `https://marketlens-1f0lwziuy-netiphong869-s-projects.vercel.app`
+- `/api/health`: `mode=live`
+- Preview environment: ตัวแปรทั้ง 6 ชื่อเป็น SET โดยไม่ได้อ่านหรือแสดงค่า
+- AAPL: Technical 100% / Fundamental 45% / Market 0% / News 100%, Q 91.75
+- MSFT: Technical 100% / Fundamental 45% / Market 0% / News 100%, Q 91.75
+- LITE: Technical 100% / Fundamental 38.75% / Market 0% / News 100%, Q 90.81
+- Horizon: ระยะสั้นเป็น Partial; ระยะกลางและยาวเป็น Insufficient และไม่มีคะแนนปลายทาง
+- Finnhub: ใช้งานได้จริงหลังเปลี่ยนเป็น `X-Finnhub-Token`; ไม่ต้องเปลี่ยน Key
+- Gemini: ค้นพบ `models/gemini-3.6-flash`; Template Fallback ทำงานเมื่อ output ไม่ผ่าน validation หรือ upstream ตอบ 503
+- SEC Company Facts: fundamentals ทำงานจริงสำหรับทั้งสามหุ้น
+- Browser console: ไม่พบ warning/error
+- Runtime logs: ไม่พบ server error หรือ secret
+- Deployment ทั้งหมดของโครงการยังเป็น Preview และ GitHub Auto Deployment ยังไม่ได้เชื่อม
+- Production deployment: ไม่ได้ดำเนินการ
