@@ -12,7 +12,7 @@ Last updated: 2026-07-27 (Asia/Bangkok)
 | Stooq validation                  | Completed locally | real response identified as HTML challenge; parser rejects unusable backup                                    |
 | Dependency triage                 | In progress       | Next.js 16.2.11 installed; 11 High package nodes remain from 2 root advisory chains                           |
 | Local verification                | Completed         | lint, typecheck, 30 Vitest files/68 tests, scanner 4/4, E2E 4/4, build, secret scan                           |
-| Live Preview verification         | Pending           | ต้อง Commit/Push และ Deploy Preview หลังเอกสารพร้อม                                                           |
+| Live Preview verification         | Completed         | Preview READY; AAPL/MSFT/FN ผ่าน; console 0; runtime ไม่มี warning/5xx/secret                                 |
 
 ## Deterministic Summary + Gemini Verdict 2026-07-27
 
@@ -22,7 +22,15 @@ Last updated: 2026-07-27 (Asia/Bangkok)
 - Summary UI เรียง Verdict, สถานะรายระยะ, เหตุผล, ความเสี่ยง, สิ่งที่ต้องติดตาม, Scenario, ข้อจำกัด และ Disclaimer
 - หน้าหลักแสดง `สรุปโดย MarketLens`; ที่มาจาก Gemini หรือ Deterministic Template อยู่ใน Info Disclosure เท่านั้น
 - Local verification: lint ผ่าน, typecheck ผ่าน, Vitest 38 files / 119 tests ผ่าน, secret-scanner regression 4/4 ผ่าน, Playwright mobile/desktop 4/4 ผ่าน, production build ผ่าน และ secret scan ผ่าน
-- Preview verification: รอ Commit/Push และ Preview deployment รอบนี้
+- Commit: `9b79a6e` (`feat: add deterministic analysis summary`)
+- Preview: `https://marketlens-bgu1rz71y-netiphong869-s-projects.vercel.app` (`dpl_BexYhm1t4dS6vPzfRvNf1YkUQjhQ`, READY, target preview)
+- AAPL: Short `มีสัญญาณบวก`; Medium/Long `ข้อมูลไม่เพียงพอ` เพราะ Fundamental Coverage 45%
+- MSFT: Short `ระวัง`; Medium/Long `ข้อมูลไม่เพียงพอ` เพราะ Fundamental Coverage 45%
+- FN: Short `ระวัง`; Medium/Long `ข้อมูลไม่เพียงพอ` เพราะ Fundamental Coverage 45%
+- FN รอบแรกได้รับ upstream 429 แบบ sanitize และไม่หักรอบ; สำเร็จหลัง rate-limit window รีเซ็ต
+- Browser Console: 0 รายการ
+- Runtime Logs: `/api/health` 200, `/api/analyze` 200 สี่ครั้ง, 429 หนึ่งครั้ง; ไม่มี warning, 5xx หรือ secret
+- Production deployment: ไม่ได้ดำเนินการ
 
 ## Technical Indicator Snapshot 2026-07-26
 

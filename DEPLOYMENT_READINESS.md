@@ -6,7 +6,9 @@
 - Summary เป็น deterministic ยกเว้น Verdict prose ที่ Gemini อาจเรียบเรียงได้หลังผ่าน Schema, number-set และ meaning validation
 - Coverage Gate ตรงกับ `CALCULATION_ENGINE.md`; ไม่มีการลดเกณฑ์เพื่อให้คะแนนแสดง
 - Frontend แสดง `สรุปโดย MarketLens` และเก็บข้อมูล Gemini/Template ไว้ใน Info Disclosure
-- ต้องทดสอบ Preview จริงกับ AAPL, MSFT และ FN รวม Browser Console และ Runtime Logs ก่อนปิดงาน
+- Preview `https://marketlens-bgu1rz71y-netiphong869-s-projects.vercel.app` สถานะ READY
+- AAPL, MSFT และ FN ผ่าน Live Mode; Browser Console 0 รายการ และ Runtime Logs ไม่มี warning/5xx/secret
+- FN พบ upstream 429 หนึ่งครั้งและกู้คืนได้หลัง rate-limit window รีเซ็ต โดยไม่หักรอบ
 - Production status: **ยังไม่อนุมัติและห้าม Deploy Production ในรอบนี้**
 
 ## Technical Indicator Snapshot 2026-07-26

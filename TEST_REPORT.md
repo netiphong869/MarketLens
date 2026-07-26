@@ -14,6 +14,13 @@
 - Playwright mobile + desktop: 4/4 ผ่าน
 - Next.js 16.2.11 production build: ผ่าน
 - Secret scan: ผ่าน
+- Preview build: ผ่าน, deployment `READY`, target `preview`
+- AAPL: Live Mode, Short `มีสัญญาณบวก`, Medium/Long `ข้อมูลไม่เพียงพอ`
+- MSFT: Live Mode, Short `ระวัง`, Medium/Long `ข้อมูลไม่เพียงพอ`
+- FN: Live Mode, Short `ระวัง`, Medium/Long `ข้อมูลไม่เพียงพอ`
+- Browser Console: 0 รายการ
+- Runtime Logs: health 200, analyze 200; ไม่มี warning/5xx/secret
+- Rate-limit regression ในระบบจริง: 429 แสดง safe error และไม่หักรอบ ก่อนสำเร็จในการลองใหม่หลัง window รีเซ็ต
 
 ## Technical Indicator Snapshot verification 2026-07-26
 

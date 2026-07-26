@@ -8,6 +8,10 @@
 - Scenario สร้างจาก Support, Resistance, EMA20, EMA50 และ Volume ที่มีจริงเท่านั้น
 - UI ไม่แสดง `Template Fallback` บนหน้าหลัก และมี Info Disclosure สำหรับที่มาของ Verdict
 - `npm run verify` ผ่าน: lint, typecheck, Vitest 38 files / 119 tests, scanner tests 4/4, Playwright 4/4, Next.js production build และ secret scan
+- Preview `dpl_BexYhm1t4dS6vPzfRvNf1YkUQjhQ` สถานะ READY และ target เป็น preview
+- AAPL, MSFT และ FN วิเคราะห์สำเร็จใน Live Mode; Summary แสดงสถานะและ Coverage Gate ตาม Structured Data
+- Browser Console เป็น 0 รายการ; Runtime Logs ไม่มี warning, 5xx หรือ secret
+- พบ upstream 429 หนึ่งครั้งระหว่าง FN รอบแรก ระบบ sanitize ข้อความ ไม่หักรอบ และทำงานสำเร็จหลัง rate limit รีเซ็ต
 - การตัดสินใจ Production ไม่เปลี่ยน: รอบนี้อนุญาตเฉพาะ Preview
 
 ## ผลตรวจขั้นสุดท้ายบน Preview
