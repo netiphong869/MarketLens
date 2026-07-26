@@ -111,3 +111,13 @@ Short บังคับ Technical, Medium บังคับ Technical+Fundamen
 ## Confidence
 
 V1 แสดงข้อความว่าไม่มี Backtest/Paper Trade เพียงพอ ห้ามสร้างคะแนนสมมุติ
+
+## Deterministic Summary
+
+- Summary ใช้ผล `scores.horizons` ร่วมกับ Coverage, Missing Modules และ Risk; ไม่คำนวณสูตรคะแนนหลักซ้ำ
+- เกณฑ์ Coverage ของ Summary ต้องตรงกับ Horizon scores ด้านบนทุกประการ
+- `partial` และ `insufficient` ซ่อนคะแนนและระบุชื่อข้อมูลที่ขาดอย่างเจาะจง
+- จุดแข็ง จุดอ่อน ความเสี่ยง Watch Items และ Scenario สร้างจาก Structured Data ด้วย pure deterministic code
+- Scenario ใช้ Support, Resistance, EMA20, EMA50 และ Volume เท่าที่มีจริง เงื่อนไขที่ไม่มีข้อมูลต้องถูกตัดออก
+- Gemini เปลี่ยนได้เฉพาะข้อความ Verdict ใน `summary.overview`; ห้ามเปลี่ยนคะแนน สถานะ เหตุผล ความเสี่ยง Watch Items หรือ Scenario
+- Gemini Verdict ต้องมี 2–3 ประโยค ใช้ชุดตัวเลขเดียวกับ deterministic Verdict และรักษาความหมายเดิม มิฉะนั้นใช้ deterministic Verdict ทันที

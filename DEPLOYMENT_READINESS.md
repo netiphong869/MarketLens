@@ -1,5 +1,14 @@
 # MarketLens Deployment Readiness
 
+## Deterministic Summary 2026-07-27
+
+- Local gates ผ่านครบสำหรับการ Deploy เฉพาะ Preview
+- Summary เป็น deterministic ยกเว้น Verdict prose ที่ Gemini อาจเรียบเรียงได้หลังผ่าน Schema, number-set และ meaning validation
+- Coverage Gate ตรงกับ `CALCULATION_ENGINE.md`; ไม่มีการลดเกณฑ์เพื่อให้คะแนนแสดง
+- Frontend แสดง `สรุปโดย MarketLens` และเก็บข้อมูล Gemini/Template ไว้ใน Info Disclosure
+- ต้องทดสอบ Preview จริงกับ AAPL, MSFT และ FN รวม Browser Console และ Runtime Logs ก่อนปิดงาน
+- Production status: **ยังไม่อนุมัติและห้าม Deploy Production ในรอบนี้**
+
 ## Technical Indicator Snapshot 2026-07-26
 
 - Local implementation พร้อมสำหรับ Preview หลังผ่าน lint, typecheck, 108 Vitest tests, 4 Playwright E2E tests, production build และ secret scan

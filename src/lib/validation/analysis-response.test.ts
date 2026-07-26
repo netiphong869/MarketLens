@@ -38,4 +38,47 @@ describe("parseAnalysisApiResult", () => {
 
     expect(() => parseAnalysisApiResult(input)).toThrow();
   });
+
+  it("rejects a response that omits deterministic horizon verdicts", () => {
+    const response = makeAnalysisResponse();
+    const input = {
+      data: {
+        ...response,
+        summary: {
+          ...response.summary,
+          horizons: undefined,
+        },
+      },
+      cached: false,
+      usage: { used: 1, remaining: 9, limit: 10 },
+    };
+
+    expect(() => parseAnalysisApiResult(input)).toThrow();
+  });
+
+  it("rejects a positive horizon that hides its score", () => {
+    const response = makeAnalysisResponse();
+    response.summary.horizons.long.status = "positive";
+    response.summary.horizons.long.score = null;
+    const input = {
+      data: response,
+      cached: false,
+      usage: { used: 1, remaining: 9, limit: 10 },
+    };
+
+    expect(() => parseAnalysisApiResult(input)).toThrow();
+  });
+
+  it("rejects an insufficient horizon that still exposes a score", () => {
+    const response = makeAnalysisResponse();
+    response.summary.horizons.short.status = "insufficient";
+    response.summary.horizons.short.score = 70;
+    const input = {
+      data: response,
+      cached: false,
+      usage: { used: 1, remaining: 9, limit: 10 },
+    };
+
+    expect(() => parseAnalysisApiResult(input)).toThrow();
+  });
 });

@@ -1,5 +1,6 @@
 import type { AnalysisResponse } from "@/types/analysis";
 import { calculateTechnicalSnapshots } from "@/engine/indicators/technical-snapshot";
+import { createTemplateSummary } from "@/engine/summary/template-summary";
 import type { Candle, Timeframe } from "@/types/market";
 
 const provenance = {
@@ -110,28 +111,46 @@ export function makeAnalysisResponse(
       technical: {
         score: 58,
         availableWeight: 100,
-        reasons: [{ code: "TREND_RECOVERY", label: "โมเมนตัมเริ่มฟื้น", impact: 8 }],
+        reasons: [
+          { code: "TREND_RECOVERY", label: "โมเมนตัมเริ่มฟื้น", impact: 8 },
+        ],
         warnings: ["แนวโน้มหลักยังไม่ยืนยัน"],
         components: { trend: 15, momentum: 12 },
       },
       market: {
         score: 62,
         availableWeight: 100,
-        reasons: [{ code: "OUTPERFORM_20D", label: "แข็งกว่าตลาดในรอบ 20 วัน", impact: 8 }],
+        reasons: [
+          {
+            code: "OUTPERFORM_20D",
+            label: "แข็งกว่าตลาดในรอบ 20 วัน",
+            impact: 8,
+          },
+        ],
         warnings: [],
         components: { relativeStrength: 38 },
       },
       fundamental: {
         score: 78,
         availableWeight: 92,
-        reasons: [{ code: "REVENUE_GROWTH", label: "รายได้เติบโตมากกว่า 10%", impact: 8 }],
-        warnings: ["Gross margin ต่ำกว่ากลุ่มซอฟต์แวร์และต้องเทียบกับผู้ผลิตฮาร์ดแวร์"],
+        reasons: [
+          {
+            code: "REVENUE_GROWTH",
+            label: "รายได้เติบโตมากกว่า 10%",
+            impact: 8,
+          },
+        ],
+        warnings: [
+          "Gross margin ต่ำกว่ากลุ่มซอฟต์แวร์และต้องเทียบกับผู้ผลิตฮาร์ดแวร์",
+        ],
         components: { growth: 21, profitability: 15 },
       },
       events: {
         score: 56,
         availableWeight: 100,
-        reasons: [{ code: "EARNINGS_BEAT", label: "ผลประกอบการดีกว่าคาด", impact: 6 }],
+        reasons: [
+          { code: "EARNINGS_BEAT", label: "ผลประกอบการดีกว่าคาด", impact: 6 },
+        ],
         warnings: [],
         components: { officialEvents: 56 },
       },
@@ -139,7 +158,13 @@ export function makeAnalysisResponse(
         score: 44,
         availableWeight: 100,
         penalty: 3,
-        reasons: [{ code: "VOLATILITY_NORMAL", label: "ความผันผวนอยู่ในช่วงปกติ", impact: 6 }],
+        reasons: [
+          {
+            code: "VOLATILITY_NORMAL",
+            label: "ความผันผวนอยู่ในช่วงปกติ",
+            impact: 6,
+          },
+        ],
         warnings: ["คะแนนสูงหมายถึงเสี่ยงสูง"],
         components: { volatility: 6, event: 5 },
       },
@@ -149,7 +174,13 @@ export function makeAnalysisResponse(
         stopped: false,
         missing: [],
         conflicts: [],
-        reasons: [{ code: "MOCK_COMPLETE", label: "ชุดข้อมูลจำลองครบสำหรับทดสอบ", impact: 92 }],
+        reasons: [
+          {
+            code: "MOCK_COMPLETE",
+            label: "ชุดข้อมูลจำลองครบสำหรับทดสอบ",
+            impact: 92,
+          },
+        ],
         warnings: ["ข้อมูลนี้เป็นข้อมูลจำลอง ไม่ใช่ข้อมูลตลาดจริง"],
         components: { freshness: 20, candles: 20 },
       },
@@ -169,16 +200,54 @@ export function makeAnalysisResponse(
       { low: 455, high: 460, strength: 76, timeframe: "1d", kind: "support" },
     ],
     resistances: [
-      { low: 478, high: 482, strength: 73, timeframe: "1d", kind: "resistance" },
+      {
+        low: 478,
+        high: 482,
+        strength: 73,
+        timeframe: "1d",
+        kind: "resistance",
+      },
     ],
     summary: {
       overview: "พื้นฐานค่อนข้างดี แต่กราฟยังต้องรอการยืนยัน",
+      horizons: {
+        short: {
+          label: "ระยะสั้น",
+          status: "neutral",
+          score: 59,
+          explanation: "ข้อมูลทดสอบ",
+          missing: [],
+        },
+        medium: {
+          label: "ระยะกลาง",
+          status: "neutral",
+          score: 65,
+          explanation: "ข้อมูลทดสอบ",
+          missing: [],
+        },
+        long: {
+          label: "ระยะยาว",
+          status: "positive",
+          score: 70,
+          explanation: "ข้อมูลทดสอบ",
+          missing: [],
+        },
+      },
       strengths: ["รายได้และ EPS เติบโต", "ROIC สูงกว่าต้นทุนเงินทุน"],
       weaknesses: ["ราคายังไม่ผ่านแนวต้านสำคัญ"],
+      risks: ["ความผันผวนอยู่ในช่วงปกติ"],
       watchItems: ["ติดตามแรงซื้อบริเวณ 455–460"],
       scenarios: [
-        { kind: "good", title: "กรณีดี", description: "ผ่านแนวต้านพร้อมปริมาณซื้อขาย" },
-        { kind: "neutral", title: "กรณีกลาง", description: "แกว่งตัวในกรอบเดิม" },
+        {
+          kind: "good",
+          title: "กรณีดี",
+          description: "ผ่านแนวต้านพร้อมปริมาณซื้อขาย",
+        },
+        {
+          kind: "neutral",
+          title: "กรณีกลาง",
+          description: "แกว่งตัวในกรอบเดิม",
+        },
         { kind: "bad", title: "กรณีแย่", description: "หลุดแนวรับหลัก" },
       ],
       limitations: ["ชุดข้อมูลนี้เป็นข้อมูลจำลอง"],
@@ -190,5 +259,6 @@ export function makeAnalysisResponse(
     confidenceMessage: "ยังไม่มีข้อมูล Backtest และ Paper Trade เพียงพอ",
   };
 
+  response.summary = createTemplateSummary(response);
   return { ...response, ...overrides };
 }

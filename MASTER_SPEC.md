@@ -17,7 +17,7 @@ MarketLens เป็น PWA สำหรับวิเคราะห์หุ�
 4. provider adapters ดึงข้อมูลและ normalize
 5. quality gate ตัดสินว่าข้อมูลพอหรือไม่
 6. deterministic engine คำนวณ Q/T/M/F/E/R และคะแนนตามระยะถือ
-7. Gemini หรือ template fallback สรุปภาษาไทยจากข้อมูลที่คำนวณแล้ว
+7. deterministic summary สร้าง Verdict, สถานะรายระยะ, เหตุผล, ความเสี่ยง, Watch Items และ Scenario จากข้อมูลที่คำนวณแล้ว; Gemini มีสิทธิ์เรียบเรียงเฉพาะ Verdict 2–3 ประโยคและต้องผ่าน validation ก่อนใช้
 8. UI แสดง 5 หน้า: ภาพรวม กราฟ พื้นฐาน ความเสี่ยง สรุป
 
 ## Data sources

@@ -125,10 +125,27 @@ export interface AnalysisScenario {
   target?: PriceZone;
 }
 
+export type SummaryHorizonStatus =
+  "caution" | "neutral" | "positive" | "insufficient";
+
+export interface SummaryHorizonVerdict {
+  label: string;
+  status: SummaryHorizonStatus;
+  score: number | null;
+  explanation: string;
+  missing: string[];
+}
+
 export interface AnalysisSummary {
   overview: string;
+  horizons: {
+    short: SummaryHorizonVerdict;
+    medium: SummaryHorizonVerdict;
+    long: SummaryHorizonVerdict;
+  };
   strengths: string[];
   weaknesses: string[];
+  risks: string[];
   watchItems: string[];
   scenarios: AnalysisScenario[];
   limitations: string[];
@@ -136,12 +153,7 @@ export interface AnalysisSummary {
 }
 
 export interface ProviderIssue {
-  provider:
-    | "SEC EDGAR"
-    | "Finnhub"
-    | "Gemini"
-    | "Stooq"
-    | "Twelve Data Market";
+  provider: "SEC EDGAR" | "Finnhub" | "Gemini" | "Stooq" | "Twelve Data Market";
   code:
     | "AUTH_ERROR"
     | "RATE_LIMITED"

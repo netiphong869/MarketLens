@@ -1,5 +1,20 @@
 # MarketLens Test Report
 
+## Deterministic Summary verification 2026-07-27
+
+- TDD ครอบคลุมข้อมูลครบ, Market Coverage ขาด, Fundamental Coverage ขาด, Scenario ไม่มี Support/Resistance และ Horizon ต้องซ่อนคะแนนเมื่อ Coverage ไม่ถึงเกณฑ์
+- Gemini regression ครอบคลุม Schema เก่า, model 404, timeout, invalid JSON, เพิ่มตัวเลขใหม่, เปลี่ยนตัวเลขเดิม, Unicode digits และกลับทิศทางราคา
+- API response schema ปฏิเสธ Summary ที่ไม่มี Horizon, สถานะ insufficient ที่ยังมีคะแนน และสถานะมีคะแนนที่ซ่อนคะแนน
+- Component tests ตรวจลำดับ Summary, สถานะสามระยะ, เหตุผลตัวเลขจริง, Risk, Scenario และ Info Disclosure
+- Playwright mobile/desktop ตรวจ `สรุปโดย MarketLens`, Summary Verdict, Horizon และ Scenario
+- `npm run lint`: ผ่าน
+- `npm run typecheck`: ผ่าน
+- Vitest: 38 files / 119 tests ผ่าน
+- Secret scanner regression: 4/4 ผ่าน
+- Playwright mobile + desktop: 4/4 ผ่าน
+- Next.js 16.2.11 production build: ผ่าน
+- Secret scan: ผ่าน
+
 ## Technical Indicator Snapshot verification 2026-07-26
 
 - TDD RED ยืนยันว่า engine/response/UI เดิมไม่มี `technicalSnapshot` และยังแสดง Placeholder

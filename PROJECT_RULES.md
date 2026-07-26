@@ -24,8 +24,8 @@
 
 ## AI
 
-- Structured facts in, schema-validated Thai prose out
-- Unknown/changed/invented numbers trigger deterministic fallback
+- Structured facts in, deterministic Summary out; Gemini เรียบเรียงได้เฉพาะ Verdict 2–3 ประโยค
+- Unknown/changed/invented numbers, schema mismatch หรือ meaning mismatch trigger deterministic fallback
 - No personal account/portfolio data is sent to Gemini
 
 ## Git and release

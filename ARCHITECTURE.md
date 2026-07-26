@@ -11,8 +11,11 @@ flowchart TD
   NORMAL --> COVERAGE["Technical / Fundamental / Market / News coverage"]
   Q --> ENGINE["Deterministic engine"]
   COVERAGE --> ENGINE
-  ENGINE --> TEXT["Gemini or Thai template"]
-  TEXT --> SAFE["Sanitized AnalysisResponse"]
+  ENGINE --> SUMMARY["Deterministic summary"]
+  SUMMARY --> TEXT["Optional Gemini verdict rewrite"]
+  TEXT --> VALIDATE["Schema, number and meaning validation"]
+  VALIDATE --> SAFE["Sanitized AnalysisResponse"]
+  SUMMARY -->|"fallback"| SAFE
   SAFE --> PWA
 ```
 
@@ -33,6 +36,7 @@ flowchart TD
 - SEC project เฉพาะ US-GAAP concepts ที่ engine ใช้ก่อนส่งเข้า normalizer
 - Finnhub ส่ง credential ผ่าน `X-Finnhub-Token` ไม่ใส่ใน URL
 - Gemini เรียก Models API และเลือก stable Flash จากรายการที่รองรับ `generateContent` ของ key ปัจจุบัน
+- Gemini รับเฉพาะ deterministic Verdict และ structured facts ที่จำเป็น ผลลัพธ์ต้องมีเพียง `verdict`; ระบบตรวจจำนวนประโยค ชุดตัวเลข และความหมาย แล้วแทนที่เฉพาะ `summary.overview` หากไม่ผ่านจะเก็บ deterministic Verdict เดิม
 - Stooq ต้องส่ง CSV header ที่ตรวจได้และมีแท่งใช้งานจริง; HTML challenge แม้ HTTP 200 ถือว่า unavailable
 - Provider issue ที่ส่งกลับ UI มีเพียง provider, safe code และ upstream status ที่ไม่เป็นความลับ
 
@@ -52,11 +56,11 @@ security boundary เมื่อมีหลาย serverless instances
 
 ตัวเลือกที่ประเมิน:
 
-| ตัวเลือก | Atomic | Serverless | ข้อสรุป |
-|---|---:|---:|---|
-| Vercel KV เดิม | ได้ | ได้ | ผลิตภัณฑ์เดิมถูกย้ายไป Marketplace ไม่เลือกสำหรับงานใหม่ |
-| Upstash Redis ผ่าน Vercel Marketplace | ได้ผ่าน transaction/Lua | ได้ | ตัวเลือกแนะนำ |
-| PostgreSQL counter | ได้ผ่าน transaction/row lock | ได้ | เหมาะเมื่อมีฐานข้อมูลผู้ใช้อยู่แล้ว แต่หนักเกิน V1 |
+| ตัวเลือก                              |                       Atomic | Serverless | ข้อสรุป                                                  |
+| ------------------------------------- | ---------------------------: | ---------: | -------------------------------------------------------- |
+| Vercel KV เดิม                        |                          ได้ |        ได้ | ผลิตภัณฑ์เดิมถูกย้ายไป Marketplace ไม่เลือกสำหรับงานใหม่ |
+| Upstash Redis ผ่าน Vercel Marketplace |      ได้ผ่าน transaction/Lua |        ได้ | ตัวเลือกแนะนำ                                            |
+| PostgreSQL counter                    | ได้ผ่าน transaction/row lock |        ได้ | เหมาะเมื่อมีฐานข้อมูลผู้ใช้อยู่แล้ว แต่หนักเกิน V1       |
 
 แผน Upstash:
 

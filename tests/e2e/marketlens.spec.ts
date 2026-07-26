@@ -25,6 +25,17 @@ test("analyzes a mock ticker and navigates every result section", async ({
   ).toBeVisible();
   await expect(page.getByText("ดูจากคะแนนเทคนิค")).toHaveCount(0);
 
+  await page.getByRole("tab", { name: "สรุป" }).click();
+  await expect(page.getByRole("heading", { name: "บทสรุป" })).toBeVisible();
+  await expect(page.getByText("สรุปโดย MarketLens")).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "สถานะระยะสั้น" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "สถานการณ์แบบมีเงื่อนไข" }),
+  ).toBeVisible();
+  await expect(page.getByText("Template Fallback")).toHaveCount(0);
+
   for (const tab of ["กราฟ", "พื้นฐาน", "ความเสี่ยง", "สรุป", "ภาพรวม"]) {
     await page.getByRole("tab", { name: tab }).click();
     await expect(page.getByRole("tab", { name: tab })).toHaveAttribute(

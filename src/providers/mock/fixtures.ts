@@ -1,5 +1,6 @@
 import type { AnalysisResponse } from "@/types/analysis";
 import { calculateTechnicalSnapshots } from "@/engine/indicators/technical-snapshot";
+import { createTemplateSummary } from "@/engine/summary/template-summary";
 import type { Candle, Timeframe } from "@/types/market";
 
 const asOf = "2026-07-18T10:00:00.000Z";
@@ -54,7 +55,7 @@ export function createMockAnalysisResponse(symbol = "FN"): AnalysisResponse {
     "4h": generateCandles("4h"),
     "1d": generateCandles("1d"),
   };
-  return {
+  const response: AnalysisResponse = {
     symbol,
     mode: "mock",
     generatedAt: asOf,
@@ -251,12 +252,36 @@ export function createMockAnalysisResponse(symbol = "FN"): AnalysisResponse {
     ],
     summary: {
       overview: "พื้นฐานค่อนข้างดี แต่กราฟยังต้องรอการยืนยันเหนือแนวต้านใกล้",
+      horizons: {
+        short: {
+          label: "ระยะสั้น",
+          status: "neutral",
+          score: 59,
+          explanation: "ข้อมูลจำลอง",
+          missing: [],
+        },
+        medium: {
+          label: "ระยะกลาง",
+          status: "neutral",
+          score: 65,
+          explanation: "ข้อมูลจำลอง",
+          missing: [],
+        },
+        long: {
+          label: "ระยะยาว",
+          status: "positive",
+          score: 70,
+          explanation: "ข้อมูลจำลอง",
+          missing: [],
+        },
+      },
       strengths: [
         "รายได้และ EPS เติบโต",
         "ROIC สูงกว่าต้นทุนเงินทุน",
         "มีเงินสดสุทธิ",
       ],
       weaknesses: ["ราคายังไม่ผ่านแนวต้านสำคัญ", "มูลค่าบางตัวอยู่ระดับสูง"],
+      risks: ["ความผันผวนอยู่ในช่วงปกติ"],
       watchItems: [
         "ติดตามแรงซื้อบริเวณ 455–460",
         "รอแท่งปิดเหนือ 482 พร้อม Volume",
@@ -289,4 +314,6 @@ export function createMockAnalysisResponse(symbol = "FN"): AnalysisResponse {
     providerIssues: [],
     confidenceMessage: "ยังไม่มีข้อมูล Backtest และ Paper Trade เพียงพอ",
   };
+  response.summary = createTemplateSummary(response);
+  return response;
 }

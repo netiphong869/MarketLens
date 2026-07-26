@@ -1,6 +1,6 @@
 # MarketLens Progress
 
-Last updated: 2026-07-26 (Asia/Bangkok)
+Last updated: 2026-07-27 (Asia/Bangkok)
 
 | Workstream                        | Status            | Evidence                                                                                                      |
 | --------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------- |
@@ -13,6 +13,16 @@ Last updated: 2026-07-26 (Asia/Bangkok)
 | Dependency triage                 | In progress       | Next.js 16.2.11 installed; 11 High package nodes remain from 2 root advisory chains                           |
 | Local verification                | Completed         | lint, typecheck, 30 Vitest files/68 tests, scanner 4/4, E2E 4/4, build, secret scan                           |
 | Live Preview verification         | Pending           | ต้อง Commit/Push และ Deploy Preview หลังเอกสารพร้อม                                                           |
+
+## Deterministic Summary + Gemini Verdict 2026-07-27
+
+- Deterministic engine เป็นเจ้าของตัวเลข คะแนน สถานะรายระยะ จุดแข็ง จุดอ่อน ความเสี่ยง Watch Items และ Scenario
+- Gemini รับและส่งกลับเฉพาะ Verdict 2–3 ประโยค ระบบตรวจ Schema ชุดตัวเลข และ semantic anchors ก่อนแทนที่ `summary.overview`
+- Horizon Summary ใช้เกณฑ์ Coverage เดียวกับ `CALCULATION_ENGINE.md`; เมื่อไม่ผ่านจะแสดง `ข้อมูลไม่เพียงพอ`, ซ่อนคะแนน และระบุโมดูลที่ขาด
+- Summary UI เรียง Verdict, สถานะรายระยะ, เหตุผล, ความเสี่ยง, สิ่งที่ต้องติดตาม, Scenario, ข้อจำกัด และ Disclaimer
+- หน้าหลักแสดง `สรุปโดย MarketLens`; ที่มาจาก Gemini หรือ Deterministic Template อยู่ใน Info Disclosure เท่านั้น
+- Local verification: lint ผ่าน, typecheck ผ่าน, Vitest 38 files / 119 tests ผ่าน, secret-scanner regression 4/4 ผ่าน, Playwright mobile/desktop 4/4 ผ่าน, production build ผ่าน และ secret scan ผ่าน
+- Preview verification: รอ Commit/Push และ Preview deployment รอบนี้
 
 ## Technical Indicator Snapshot 2026-07-26
 

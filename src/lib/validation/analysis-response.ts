@@ -78,11 +78,87 @@ const snapshotsSchema = z
     }
   });
 
+const horizonStatusSchema = z.enum([
+  "caution",
+  "neutral",
+  "positive",
+  "insufficient",
+]);
+
+const horizonVerdictSchema = z
+  .object({
+    label: z.string().min(1),
+    status: horizonStatusSchema,
+    score: z.number().finite().min(0).max(100).nullable(),
+    explanation: z.string().min(1),
+    missing: z.array(z.string().min(1)),
+  })
+  .superRefine((horizon, context) => {
+    if (horizon.status === "insufficient") {
+      if (horizon.score !== null) {
+        context.addIssue({
+          code: "custom",
+          path: ["score"],
+          message: "Insufficient horizon must not expose a score",
+        });
+      }
+      if (horizon.missing.length === 0) {
+        context.addIssue({
+          code: "custom",
+          path: ["missing"],
+          message: "Insufficient horizon must name missing data",
+        });
+      }
+      return;
+    }
+
+    if (horizon.score === null) {
+      context.addIssue({
+        code: "custom",
+        path: ["score"],
+        message: "Scored horizon requires a finite score",
+      });
+    }
+  });
+
+const priceZoneSchema = z.object({
+  low: z.number().finite(),
+  high: z.number().finite(),
+  strength: z.number().finite().min(0),
+  timeframe: timeframeSchema,
+  kind: z.enum(["support", "resistance"]),
+});
+
+const analysisScenarioSchema = z.object({
+  kind: z.enum(["good", "neutral", "bad"]),
+  title: z.string().min(1),
+  description: z.string().min(1),
+  trigger: priceZoneSchema.optional(),
+  target: priceZoneSchema.optional(),
+});
+
+const analysisSummarySchema = z.object({
+  overview: z.string().min(1),
+  horizons: z.object({
+    short: horizonVerdictSchema,
+    medium: horizonVerdictSchema,
+    long: horizonVerdictSchema,
+  }),
+  strengths: z.array(z.string().min(1)),
+  weaknesses: z.array(z.string().min(1)),
+  risks: z.array(z.string().min(1)),
+  watchItems: z.array(z.string().min(1)),
+  scenarios: z.array(analysisScenarioSchema).length(3),
+  limitations: z.array(z.string().min(1)),
+  disclaimer: z.string().min(1),
+});
+
 const analysisApiResultSchema = z
   .object({
     data: z
       .object({
         technicalSnapshot: snapshotsSchema,
+        summary: analysisSummarySchema,
       })
       .passthrough(),
     cached: z.boolean(),
