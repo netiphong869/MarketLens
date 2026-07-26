@@ -182,6 +182,45 @@
   font-size: 1.16rem;
 }
 
+.indicatorSnapshot {
+  display: grid;
+  gap: 18px;
+}
+
+.indicatorHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.indicatorMeta,
+.indicatorTime,
+.metricNote {
+  color: var(--ink-muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.indicatorMeta {
+  margin: 6px 0 0;
+}
+
+.indicatorTime {
+  white-space: nowrap;
+}
+
+.indicatorGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.metricNote {
+  min-height: 2.3em;
+}
+
 .reasonList,
 .plainList {
   display: grid;
@@ -297,6 +336,10 @@
 
   .metricGrid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .indicatorGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .twoColumn {

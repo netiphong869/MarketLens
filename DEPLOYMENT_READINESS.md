@@ -1,5 +1,30 @@
 # MarketLens Deployment Readiness
 
+## Technical Indicator Snapshot 2026-07-26
+
+- Local implementation พร้อมสำหรับ Preview หลังผ่าน lint, typecheck, 108 Vitest tests, 4 Playwright E2E tests, production build และ secret scan
+- Snapshot มาจาก OHLCV เดิม ไม่มี API Key ใหม่และไม่มี Twelve Data indicator endpoint เพิ่ม
+- Analysis API มี runtime validation สำหรับ Snapshot ทั้ง 4 timeframe
+- Production status ไม่เปลี่ยน: ยังไม่อนุมัติ Production ตาม dependency/rate-limit/provider-license limitations เดิม
+- Preview URL ใหม่และผล live AAPL จะบันทึกหลัง Preview deployment สำเร็จ
+
+## Production Readiness phase 2026-07-25
+
+- Market/Sector context: implemented locally with Twelve Data, SPY benchmark,
+  sector ETF mapping, 1D/5D/20D/60D returns และ shared 15-minute cache
+- Cold analysis credit budget: สูงสุด 7 Twelve Data credits
+- S&P 500 ใช้ SPY เป็น investable proxy และต้องแสดงว่าเป็น proxy
+- NASDAQ และ Dow สามารถใช้ QQQ/DIA สำหรับ Market Pulse ในอนาคต แต่ไม่รวมใน
+  analysis cold path เพื่อไม่ให้เกิน free-tier burst
+- VIX: ยังไม่มีข้อมูลที่ยืนยันได้ใน free tier จึงแสดง unavailable และไม่สร้าง proxy ปลอม
+- Data Integrity แยกจาก Technical/Fundamental/Market/News Coverage
+- Horizon score ใช้ minimum coverage ตาม `CALCULATION_ENGINE.md`
+- Durable rate limit: เลือก Upstash Redis เป็นแบบเป้าหมาย แต่ Preview ปัจจุบัน
+  ยังใช้ in-memory counter
+- Dependency security: ดู `RISK_ACCEPTANCE.md`
+- Production High: 2 package nodes (`next` → `sharp`) จึง **ห้ามประกาศ Production Ready**
+- Dev-tooling High: 9 package nodes; ไม่อยู่ใน production tree
+
 ## Final Preview result
 
 - Project: `marketlens`

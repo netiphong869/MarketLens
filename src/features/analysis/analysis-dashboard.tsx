@@ -18,6 +18,10 @@ import { RiskPanel } from "@/components/stock/risk-panel";
 import { StockSearch } from "@/components/stock/stock-search";
 import { Card } from "@/components/ui/card";
 import { ErrorState } from "@/components/ui/error-state";
+import {
+  parseAnalysisApiResult,
+  type AnalysisApiResult,
+} from "@/lib/validation/analysis-response";
 import type { AnalysisResponse } from "@/types/analysis";
 import type { UsageStatus } from "@/lib/usage/daily-limit";
 
@@ -25,9 +29,7 @@ import styles from "./analysis-dashboard.module.css";
 
 type DashboardState = "idle" | "loading" | "success" | "error";
 type HealthMode = "checking" | "live" | "mock" | "unknown";
-interface ApiAnalysisResult {
-  data: AnalysisResponse;
-  cached: boolean;
+interface ApiAnalysisResult extends AnalysisApiResult {
   usage: UsageStatus;
 }
 type AnalyzeFunction = (
@@ -71,7 +73,7 @@ const defaultAnalyze: AnalyzeFunction = async (symbol) => {
       parsed.success ? parsed.data.error.message : genericAnalysisError,
     );
   }
-  return response.json() as Promise<ApiAnalysisResult>;
+  return parseAnalysisApiResult(await response.json());
 };
 
 const defaultHealthCheck: HealthCheckFunction = async () => {

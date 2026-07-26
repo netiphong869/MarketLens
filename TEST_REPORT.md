@@ -1,5 +1,23 @@
 # MarketLens Test Report
 
+## Technical Indicator Snapshot verification 2026-07-26
+
+- TDD RED ยืนยันว่า engine/response/UI เดิมไม่มี `technicalSnapshot` และยังแสดง Placeholder
+- Unit tests ครอบคลุม EMA, RSI, MACD line/signal/histogram, ADX, ATR, OBV และ Volume Metrics
+- Missing-data tests ยืนยันค่า `null`, เหตุผลแท่งเทียนไม่พอ และเหตุผลไม่มี Volume
+- Engine/API integration tests ยืนยัน Snapshot ครบ 15M/1H/4H/1D
+- Provider orchestration test ยืนยัน `getCandles` ยัง 4 calls เท่าเดิม ไม่มี call สำหรับ Indicator เพิ่ม
+- Component tests ยืนยันตัวเลข คำแปล และไม่มีข้อความ “ดูจากคะแนนเทคนิค”
+- Timeframe interaction test ใช้ค่าต่างกันและยืนยันว่ากด 15M แล้วแทนค่าจาก 1D ทันที
+- `npm run lint`: ผ่าน
+- `npm run typecheck`: ผ่าน
+- Vitest: 38 files / 111 tests ผ่าน
+- Secret-scan regression: 4/4 ผ่าน
+- Playwright mobile + desktop: 4/4 ผ่าน รวมการสลับ Indicator Snapshot 1D → 15M
+- Next.js 16.2.11 production build: ผ่าน
+- Secret scan: 155 current files, 8 commits, 1073 history blobs ผ่าน
+- Preview verification: รอ Deploy รอบใหม่
+
 ## Final verification
 
 - `npm run lint`: ผ่าน

@@ -1,23 +1,32 @@
 import { analyzeSnapshot } from "@/engine/scoring/analysis-engine";
 import { createTemplateSummary } from "@/engine/summary/template-summary";
 import type { AnalysisResponse, PriceZone, ProviderIssue } from "@/types/analysis";
-import type { Candle, CompanyProfile, FinancialMetrics, MarketEvent, Quote, Timeframe } from "@/types/market";
+import type { Candle, CompanyProfile, FinancialMetrics, MarketContext, MarketEvent, Quote, Timeframe } from "@/types/market";
 
 interface MarketProvider { getQuote(symbol: string): Promise<Quote>; getCandles(symbol: string, timeframe: Timeframe, outputSize?: number): Promise<Candle[]> }
 interface CompanyProvider { getProfile(symbol: string): Promise<CompanyProfile>; getFundamentals(symbol: string): Promise<FinancialMetrics | null> }
 interface NewsProvider { getEvents(symbol: string, from: string, to: string): Promise<MarketEvent[]> }
-interface Dependencies { market: MarketProvider; company: CompanyProvider; news: NewsProvider }
+interface MarketContextProvider { getContext(symbol: string, sector: string | null, stockDaily: Candle[]): Promise<MarketContext> }
+interface Dependencies { market: MarketProvider; company: CompanyProvider; news: NewsProvider; marketContext?: MarketContextProvider }
 
 export async function buildLiveAnalysis(symbol: string, dependencies: Dependencies): Promise<AnalysisResponse> {
+  const generatedAt = new Date().toISOString();
   const [quote, profile, ...frameResults] = await Promise.all([
     dependencies.market.getQuote(symbol), dependencies.company.getProfile(symbol),
     ...(["15m", "1h", "4h", "1d"] as Timeframe[]).map((frame) => dependencies.market.getCandles(symbol, frame, 220)),
   ]);
   const candles = Object.fromEntries((["15m", "1h", "4h", "1d"] as Timeframe[]).map((frame, index) => [frame, frameResults[index]])) as Record<Timeframe, Candle[]>;
   const today = new Date(); const from = new Date(today.getTime() - 30 * 86_400_000).toISOString().slice(0, 10); const to = today.toISOString().slice(0, 10);
-  const [fundamentalResult, eventResult] = await Promise.allSettled([dependencies.company.getFundamentals(symbol), dependencies.news.getEvents(symbol, from, to)]);
+  const [fundamentalResult, eventResult, marketContextResult] = await Promise.allSettled([
+    dependencies.company.getFundamentals(symbol),
+    dependencies.news.getEvents(symbol, from, to),
+    dependencies.marketContext
+      ? dependencies.marketContext.getContext(symbol, profile.sector, candles["1d"])
+      : Promise.resolve(null),
+  ]);
   const fundamentals = fundamentalResult.status === "fulfilled" ? fundamentalResult.value : null;
   const events = eventResult.status === "fulfilled" ? eventResult.value : [];
+  const marketContext = marketContextResult.status === "fulfilled" ? marketContextResult.value : null;
   const providerIssues: ProviderIssue[] = [
     ...(fundamentalResult.status === "rejected"
       ? [providerIssue("SEC EDGAR", fundamentalResult.reason)]
@@ -25,12 +34,25 @@ export async function buildLiveAnalysis(symbol: string, dependencies: Dependenci
     ...(eventResult.status === "rejected"
       ? [providerIssue("Finnhub", eventResult.reason)]
       : []),
+    ...(marketContextResult.status === "rejected"
+      ? [providerIssue("Twelve Data Market", marketContextResult.reason)]
+      : []),
   ];
-  const mode = fundamentalResult.status === "rejected" || eventResult.status === "rejected" ? "partial" : "live";
-  const scores = analyzeSnapshot({ symbol, quote, profile, candles, fundamentals, events });
+  const mode = fundamentalResult.status === "rejected" || eventResult.status === "rejected" || marketContextResult.status === "rejected" ? "partial" : "live";
+  const engine = analyzeSnapshot({
+    symbol,
+    quote,
+    profile,
+    candles,
+    fundamentals,
+    events,
+    marketContext,
+    calculatedAt: generatedAt,
+  });
+  const { technicalSnapshot, ...scores } = engine;
   const { supports, resistances } = priceZones(candles["1d"]);
   const response: AnalysisResponse = {
-    symbol, mode, generatedAt: new Date().toISOString(), quote, profile, candles, fundamentals, events, scores, supports, resistances,
+    symbol, mode, generatedAt, quote, profile, candles, technicalSnapshot, fundamentals, events, marketContext, scores, supports, resistances,
     summary: { overview: "", strengths: [], weaknesses: [], watchItems: [], scenarios: [], limitations: [], disclaimer: "" }, summarySource: "template", summaryModel: null, providerIssues,
     confidenceMessage: "ยังไม่มีข้อมูล Backtest และ Paper Trade เพียงพอสำหรับประเมินความมั่นใจเชิงสถิติ",
   };

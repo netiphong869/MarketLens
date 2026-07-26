@@ -1,4 +1,5 @@
 import type { AnalysisResponse } from "@/types/analysis";
+import { calculateTechnicalSnapshots } from "@/engine/indicators/technical-snapshot";
 import type { Candle, Timeframe } from "@/types/market";
 
 const asOf = "2026-07-18T10:00:00.000Z";
@@ -15,24 +16,44 @@ function generateCandles(timeframe: Timeframe): Candle[] {
     "4h": 4 * 60 * 60 * 1000,
     "1d": 24 * 60 * 60 * 1000,
   };
+  const behavior: Record<
+    Timeframe,
+    { slope: number; phase: number; amplitude: number; volumeBase: number }
+  > = {
+    "15m": { slope: 0.08, phase: 0, amplitude: 3.5, volumeBase: 180_000 },
+    "1h": { slope: 0.14, phase: 1.2, amplitude: 5, volumeBase: 310_000 },
+    "4h": { slope: 0.22, phase: 2.4, amplitude: 6.5, volumeBase: 470_000 },
+    "1d": { slope: 0.31, phase: 3.6, amplitude: 8, volumeBase: 620_000 },
+  };
   const start = Date.UTC(2026, 0, 1);
+  const pattern = behavior[timeframe];
   return Array.from({ length: 220 }, (_, index) => {
-    const trend = 395 + index * 0.31;
-    const wave = Math.sin(index / 7) * 8 + Math.cos(index / 17) * 4;
+    const trend = 395 + index * pattern.slope;
+    const wave =
+      Math.sin(index / 7 + pattern.phase) * pattern.amplitude +
+      Math.cos(index / 17 + pattern.phase) * (pattern.amplitude / 2);
     const close = Number((trend + wave).toFixed(2));
     return {
-      time: new Date(start + index * intervalMilliseconds[timeframe]).toISOString(),
+      time: new Date(
+        start + index * intervalMilliseconds[timeframe],
+      ).toISOString(),
       open: Number((close - Math.sin(index) * 2).toFixed(2)),
       high: Number((close + 4.2).toFixed(2)),
       low: Number((close - 4.8).toFixed(2)),
       close,
-      volume: 620_000 + ((index * 47_000) % 980_000),
+      volume: pattern.volumeBase + ((index * 47_000) % 980_000),
       closed: index < 219,
     };
   });
 }
 
 export function createMockAnalysisResponse(symbol = "FN"): AnalysisResponse {
+  const candles = {
+    "15m": generateCandles("15m"),
+    "1h": generateCandles("1h"),
+    "4h": generateCandles("4h"),
+    "1d": generateCandles("1d"),
+  };
   return {
     symbol,
     mode: "mock",
@@ -58,12 +79,8 @@ export function createMockAnalysisResponse(symbol = "FN"): AnalysisResponse {
       description: "ผู้ให้บริการด้านการผลิตอุปกรณ์อิเล็กทรอนิกส์และโฟโตนิกส์",
       provenance,
     },
-    candles: {
-      "15m": generateCandles("15m"),
-      "1h": generateCandles("1h"),
-      "4h": generateCandles("4h"),
-      "1d": generateCandles("1d"),
-    },
+    candles,
+    technicalSnapshot: calculateTechnicalSnapshots(candles, asOf),
     fundamentals: {
       revenueGrowthYoY: 14.2,
       revenueGrowthThreeYear: 11.8,
@@ -97,18 +114,37 @@ export function createMockAnalysisResponse(symbol = "FN"): AnalysisResponse {
         provenance,
       },
     ],
+    marketContext: {
+      benchmarkSymbol: "SPY",
+      sectorSymbol: "XLK",
+      stockReturns: { "1d": 1.2, "5d": 3.4, "20d": 8.1, "60d": 14.2 },
+      benchmarkReturns: { "1d": 0.6, "5d": 2.1, "20d": 5.2, "60d": 9.5 },
+      sectorReturns: { "1d": 0.9, "5d": 2.8, "20d": 6.7, "60d": 11.8 },
+      benchmarkTrend: "up",
+      sectorTrend: "up",
+      volatilityPercentile: 42,
+      provenance,
+    },
     scores: {
       technical: {
         score: 58,
         availableWeight: 100,
-        reasons: [{ code: "TREND_RECOVERY", label: "โมเมนตัมเริ่มฟื้น", impact: 8 }],
+        reasons: [
+          { code: "TREND_RECOVERY", label: "โมเมนตัมเริ่มฟื้น", impact: 8 },
+        ],
         warnings: ["แนวโน้มหลักยังไม่ยืนยัน"],
         components: { trend: 15, momentum: 12, volume: 9 },
       },
       market: {
         score: 62,
         availableWeight: 100,
-        reasons: [{ code: "OUTPERFORM_20D", label: "แข็งกว่าตลาดในรอบ 20 วัน", impact: 8 }],
+        reasons: [
+          {
+            code: "OUTPERFORM_20D",
+            label: "แข็งกว่าตลาดในรอบ 20 วัน",
+            impact: 8,
+          },
+        ],
         warnings: [],
         components: { relativeStrength: 38, trend: 14 },
       },
@@ -116,7 +152,11 @@ export function createMockAnalysisResponse(symbol = "FN"): AnalysisResponse {
         score: 78,
         availableWeight: 92,
         reasons: [
-          { code: "REVENUE_GROWTH", label: "รายได้เติบโตมากกว่า 10%", impact: 8 },
+          {
+            code: "REVENUE_GROWTH",
+            label: "รายได้เติบโตมากกว่า 10%",
+            impact: 8,
+          },
           { code: "ROIC_SPREAD", label: "ROIC สูงกว่า WACC", impact: 10 },
         ],
         warnings: ["ควรเทียบ Gross margin กับผู้ผลิตฮาร์ดแวร์ในกลุ่มเดียวกัน"],
@@ -125,7 +165,9 @@ export function createMockAnalysisResponse(symbol = "FN"): AnalysisResponse {
       events: {
         score: 56,
         availableWeight: 100,
-        reasons: [{ code: "EARNINGS_BEAT", label: "ผลประกอบการดีกว่าคาด", impact: 6 }],
+        reasons: [
+          { code: "EARNINGS_BEAT", label: "ผลประกอบการดีกว่าคาด", impact: 6 },
+        ],
         warnings: [],
         components: { officialEvents: 56 },
       },
@@ -134,11 +176,25 @@ export function createMockAnalysisResponse(symbol = "FN"): AnalysisResponse {
         availableWeight: 100,
         penalty: 3,
         reasons: [
-          { code: "VOLATILITY_NORMAL", label: "ความผันผวนอยู่ในช่วงปกติ", impact: 6 },
-          { code: "VALUATION_ELEVATED", label: "มูลค่าบางตัวสูงกว่าค่าเฉลี่ย", impact: 8 },
+          {
+            code: "VOLATILITY_NORMAL",
+            label: "ความผันผวนอยู่ในช่วงปกติ",
+            impact: 6,
+          },
+          {
+            code: "VALUATION_ELEVATED",
+            label: "มูลค่าบางตัวสูงกว่าค่าเฉลี่ย",
+            impact: 8,
+          },
         ],
         warnings: ["คะแนนสูงหมายถึงเสี่ยงสูง"],
-        components: { volatility: 6, liquidity: 2, event: 5, financial: 4, valuation: 8 },
+        components: {
+          volatility: 6,
+          liquidity: 2,
+          event: 5,
+          financial: 4,
+          valuation: 8,
+        },
       },
       quality: {
         score: 92,
@@ -146,9 +202,20 @@ export function createMockAnalysisResponse(symbol = "FN"): AnalysisResponse {
         stopped: false,
         missing: [],
         conflicts: [],
-        reasons: [{ code: "MOCK_COMPLETE", label: "ชุดข้อมูลจำลองครบสำหรับทดสอบ", impact: 92 }],
+        reasons: [
+          {
+            code: "MOCK_COMPLETE",
+            label: "ชุดข้อมูลจำลองครบสำหรับทดสอบ",
+            impact: 92,
+          },
+        ],
         warnings: ["ข้อมูลนี้เป็นข้อมูลจำลอง ไม่ใช่ข้อมูลตลาดจริง"],
-        components: { freshness: 20, candles: 20, fundamentals: 14, traceability: 5 },
+        components: {
+          freshness: 20,
+          candles: 20,
+          fundamentals: 14,
+          traceability: 5,
+        },
       },
       coverage: {
         technical: { percent: 100, status: "complete", missing: [] },
@@ -167,20 +234,54 @@ export function createMockAnalysisResponse(symbol = "FN"): AnalysisResponse {
       { low: 438, high: 445, strength: 67, timeframe: "1d", kind: "support" },
     ],
     resistances: [
-      { low: 478, high: 482, strength: 73, timeframe: "1d", kind: "resistance" },
-      { low: 515, high: 522, strength: 64, timeframe: "1d", kind: "resistance" },
+      {
+        low: 478,
+        high: 482,
+        strength: 73,
+        timeframe: "1d",
+        kind: "resistance",
+      },
+      {
+        low: 515,
+        high: 522,
+        strength: 64,
+        timeframe: "1d",
+        kind: "resistance",
+      },
     ],
     summary: {
       overview: "พื้นฐานค่อนข้างดี แต่กราฟยังต้องรอการยืนยันเหนือแนวต้านใกล้",
-      strengths: ["รายได้และ EPS เติบโต", "ROIC สูงกว่าต้นทุนเงินทุน", "มีเงินสดสุทธิ"],
-      weaknesses: ["ราคายังไม่ผ่านแนวต้านสำคัญ", "มูลค่าบางตัวอยู่ระดับสูง"],
-      watchItems: ["ติดตามแรงซื้อบริเวณ 455–460", "รอแท่งปิดเหนือ 482 พร้อม Volume"],
-      scenarios: [
-        { kind: "good", title: "กรณีดี", description: "ผ่าน 478–482 พร้อมปริมาณซื้อขายสนับสนุน" },
-        { kind: "neutral", title: "กรณีกลาง", description: "แกว่งตัวระหว่าง 455–482 และยังไม่เลือกทิศทาง" },
-        { kind: "bad", title: "กรณีแย่", description: "ปิดต่ำกว่า 455 และเพิ่มความเสี่ยงไปยังแนวรับถัดไป" },
+      strengths: [
+        "รายได้และ EPS เติบโต",
+        "ROIC สูงกว่าต้นทุนเงินทุน",
+        "มีเงินสดสุทธิ",
       ],
-      limitations: ["ชุดข้อมูลนี้เป็นข้อมูลจำลอง", "ยังไม่มีผล Backtest เพียงพอ"],
+      weaknesses: ["ราคายังไม่ผ่านแนวต้านสำคัญ", "มูลค่าบางตัวอยู่ระดับสูง"],
+      watchItems: [
+        "ติดตามแรงซื้อบริเวณ 455–460",
+        "รอแท่งปิดเหนือ 482 พร้อม Volume",
+      ],
+      scenarios: [
+        {
+          kind: "good",
+          title: "กรณีดี",
+          description: "ผ่าน 478–482 พร้อมปริมาณซื้อขายสนับสนุน",
+        },
+        {
+          kind: "neutral",
+          title: "กรณีกลาง",
+          description: "แกว่งตัวระหว่าง 455–482 และยังไม่เลือกทิศทาง",
+        },
+        {
+          kind: "bad",
+          title: "กรณีแย่",
+          description: "ปิดต่ำกว่า 455 และเพิ่มความเสี่ยงไปยังแนวรับถัดไป",
+        },
+      ],
+      limitations: [
+        "ชุดข้อมูลนี้เป็นข้อมูลจำลอง",
+        "ยังไม่มีผล Backtest เพียงพอ",
+      ],
       disclaimer: "ใช้เพื่อการศึกษา ไม่ใช่คำแนะนำหรือคำสั่งซื้อขายหลักทรัพย์",
     },
     summarySource: "template",

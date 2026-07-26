@@ -12,20 +12,28 @@ import { SecEdgarProvider } from "@/providers/sec-edgar/provider";
 import { GeminiProvider } from "@/providers/gemini/provider";
 import { FallbackCompanyProfileProvider } from "@/providers/fallback/company-profile-provider";
 import { AppError } from "@/lib/errors/app-error";
+import { MarketContextProvider } from "@/providers/twelve-data/market-context-provider";
+import type { Candle } from "@/types/market";
 
 const env = getServerEnv();
+const marketContextCache = new TtlCache<Candle[]>();
 export const defaultAnalysisService = new AnalysisService({
   build: async (symbol) => {
     if (env.MOCK_DATA_MODE) {
       const response = createMockAnalysisResponse(symbol);
-      response.scores = analyzeSnapshot({
+      const engine = analyzeSnapshot({
         symbol,
         quote: response.quote,
         profile: response.profile,
         candles: response.candles,
         fundamentals: response.fundamentals,
         events: response.events,
+        marketContext: response.marketContext,
+        calculatedAt: response.generatedAt,
       });
+      const { technicalSnapshot, ...scores } = engine;
+      response.technicalSnapshot = technicalSnapshot;
+      response.scores = scores;
       return response;
     }
     if (
@@ -44,6 +52,7 @@ export const defaultAnalysisService = new AnalysisService({
     const finnhub = new FinnhubProvider(env.FINNHUB_API_KEY);
     const sec = new SecEdgarProvider(env.SEC_USER_AGENT);
     const companyProfile = new FallbackCompanyProfileProvider(finnhub, sec);
+    const marketContext = new MarketContextProvider(market, marketContextCache);
     const response = await buildLiveAnalysis(symbol, {
       market,
       company: {
@@ -51,6 +60,7 @@ export const defaultAnalysisService = new AnalysisService({
         getFundamentals: (value) => sec.getFundamentals(value),
       },
       news: finnhub,
+      marketContext,
     });
     if (env.GEMINI_API_KEY) {
       const generated = await new GeminiProvider(env.GEMINI_API_KEY).summarize(

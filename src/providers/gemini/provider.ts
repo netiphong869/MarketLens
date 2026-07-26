@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { requestJson } from "@/lib/api/http";
 import { AppError } from "@/lib/errors/app-error";
-import { createTemplateSummary, validateSummaryNumbers } from "@/engine/summary/template-summary";
+import { createTemplateSummary } from "@/engine/summary/template-summary";
 import type { ProviderFetch } from "@/providers/contracts";
 import type { AnalysisResponse, AnalysisSummary } from "@/types/analysis";
 
@@ -64,7 +64,7 @@ export class GeminiProvider {
     try {
       const response = responseSchema.parse(rawResponse);
       const parsed = summarySchema.parse(JSON.parse(response.candidates[0].content.parts[0].text));
-      if (!validateSummaryNumbers(parsed, input)) return { summary: fallback, source: "template", model, failureCode: "INVALID_OUTPUT", httpStatus: 200 };
+      if (containsNumber(parsed)) return { summary: fallback, source: "template", model, failureCode: "INVALID_OUTPUT", httpStatus: 200 };
       return { summary: parsed, source: "gemini", model, httpStatus: 200 };
     } catch {
       return { summary: fallback, source: "template", model, failureCode: "INVALID_OUTPUT", httpStatus: 200 };
@@ -126,6 +126,48 @@ function compareModels(left: { name: string }, right: { name: string }): number 
 }
 
 function prompt(input: AnalysisResponse): string {
-  const safeInput = { symbol: input.symbol, generatedAt: input.generatedAt, quote: input.quote, scores: input.scores, supports: input.supports, resistances: input.resistances, events: input.events.map(({ title, category, direction, severity, authority, occurredAt }) => ({ title, category, direction, severity, authority, occurredAt })) };
-  return `คุณเป็นผู้เรียบเรียงรายงาน MarketLens ภาษาไทย ห้ามคำนวณหรือเพิ่มตัวเลขใหม่ ใช้เฉพาะ JSON นี้ และตอบ JSON ตามฟิลด์ overview,strengths,weaknesses,watchItems,scenarios,limitations,disclaimer เท่านั้น:\n${JSON.stringify(safeInput)}`;
+  const reasons = [
+    ...input.scores.technical.reasons,
+    ...(input.scores.fundamental?.reasons ?? []),
+    ...input.scores.market.reasons,
+    ...input.scores.events.reasons,
+  ];
+  const safeInput = {
+    symbol: withoutNumbers(input.symbol),
+    horizonStatus: {
+      short: input.scores.horizons.short.status,
+      medium: input.scores.horizons.medium.status,
+      long: input.scores.horizons.long.status,
+    },
+    coverageStatus: {
+      technical: input.scores.coverage.technical.status,
+      fundamental: input.scores.coverage.fundamental.status,
+      market: input.scores.coverage.market.status,
+      news: input.scores.coverage.news.status,
+    },
+    strengths: reasons
+      .filter((reason) => reason.impact > 0)
+      .map((reason) => withoutNumbers(reason.label))
+      .filter(Boolean),
+    weaknesses: [
+      ...reasons
+        .filter((reason) => reason.impact < 0)
+        .map((reason) => withoutNumbers(reason.label)),
+      ...input.scores.risk.reasons.map((reason) => withoutNumbers(reason.label)),
+    ].filter(Boolean),
+    limitations: [
+      ...input.scores.quality.missing,
+      ...input.scores.quality.warnings,
+      ...input.providerIssues.map((issue) => `${issue.provider} ${issue.code}`),
+    ].map(withoutNumbers).filter(Boolean),
+  };
+  return `คุณเป็นผู้เรียบเรียงรายงาน MarketLens ภาษาไทย ใช้ข้อเท็จจริงเชิงข้อความจาก JSON นี้เท่านั้น ห้ามคำนวณ ห้ามกล่าวถึงตัวเลข ราคา คะแนน เปอร์เซ็นต์ หรือระดับราคา และห้ามเปลี่ยนผลของระบบ ตอบ JSON ตามฟิลด์ overview,strengths,weaknesses,watchItems,scenarios,limitations,disclaimer เท่านั้น:\n${JSON.stringify(safeInput)}`;
+}
+
+function withoutNumbers(value: string): string {
+  return value.replace(/\p{N}+(?:[.,]\p{N}+)?/gu, "").replace(/\s+/g, " ").trim();
+}
+
+function containsNumber(summary: AnalysisSummary): boolean {
+  return /\p{N}/u.test(JSON.stringify(summary));
 }

@@ -28,15 +28,16 @@ export class DailyUsageCounter {
     };
   }
 
+  assertAvailable(clientId: string): void {
+    if (this.currentEntry(clientId).used >= this.limit) {
+      throw dailyLimitError(this.limit);
+    }
+  }
+
   commitSuccess(clientId: string): UsageStatus {
     const entry = this.currentEntry(clientId);
     if (entry.used >= this.limit) {
-      throw new AppError(
-        "DAILY_LIMIT_REACHED",
-        `ครบจำนวนวิเคราะห์ ${this.limit} รอบของวันนี้แล้ว`,
-        429,
-        false,
-      );
+      throw dailyLimitError(this.limit);
     }
     entry.used += 1;
     return this.status(clientId);
@@ -50,6 +51,15 @@ export class DailyUsageCounter {
     this.usage.set(clientId, fresh);
     return fresh;
   }
+}
+
+function dailyLimitError(limit: number): AppError {
+  return new AppError(
+    "DAILY_LIMIT_REACHED",
+    `ครบจำนวนวิเคราะห์ ${limit} รอบของวันนี้แล้ว`,
+    429,
+    false,
+  );
 }
 
 export function bangkokDateKey(date: Date): string {

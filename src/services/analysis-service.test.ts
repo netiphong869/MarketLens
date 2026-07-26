@@ -36,4 +36,20 @@ describe("AnalysisService", () => {
     await expect(service.analyze("FN", "device-a")).rejects.toThrow("provider down");
     expect(usage.status("device-a").remaining).toBe(10);
   });
+
+  it("rejects an uncached request before calling providers when the daily limit is exhausted", async () => {
+    const build = vi.fn(async (symbol: string) => createMockAnalysisResponse(symbol));
+    const service = new AnalysisService({
+      build,
+      cache: new TtlCache(),
+      usage: new DailyUsageCounter(1),
+      ttlSeconds: 300,
+    });
+
+    await service.analyze("AAPL", "device-a");
+    await expect(service.analyze("MSFT", "device-a")).rejects.toMatchObject({
+      code: "DAILY_LIMIT_REACHED",
+    });
+    expect(build).toHaveBeenCalledTimes(1);
+  });
 });

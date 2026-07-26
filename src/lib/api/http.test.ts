@@ -53,4 +53,49 @@ describe("requestJson", () => {
       }),
     ).rejects.toMatchObject({ code: "PROVIDER_UNAVAILABLE" } satisfies Partial<AppError>);
   });
+
+  it("stops reading a streamed response as soon as the decompressed limit is exceeded", async () => {
+    let cancelled = false;
+    const encoder = new TextEncoder();
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(encoder.encode('{"data":"'));
+        controller.enqueue(encoder.encode("x".repeat(64)));
+        controller.enqueue(encoder.encode('"}'));
+      },
+      cancel() {
+        cancelled = true;
+      },
+    });
+    const fetchFn = vi.fn().mockResolvedValue(
+      new Response(body, {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+
+    await expect(
+      requestJson("https://provider.test/quote", {
+        fetchFn,
+        maxResponseBytes: 32,
+      }),
+    ).rejects.toMatchObject({ code: "PROVIDER_UNAVAILABLE" } satisfies Partial<AppError>);
+    expect(cancelled).toBe(true);
+  });
+
+  it("disables redirects for provider requests by default", async () => {
+    const fetchFn = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+
+    await requestJson("https://provider.test/quote", { fetchFn });
+
+    expect(fetchFn).toHaveBeenCalledWith(
+      "https://provider.test/quote",
+      expect.objectContaining({ redirect: "error" }),
+    );
+  });
 });

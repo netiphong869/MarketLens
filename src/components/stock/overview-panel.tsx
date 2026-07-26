@@ -31,7 +31,7 @@ export function OverviewPanel({ analysis }: { analysis: AnalysisResponse }) {
           <h2 className={styles.sectionTitle}>ความเสี่ยงและคุณภาพข้อมูล</h2>
           <RiskMeter score={analysis.scores.risk.score} label="ความเสี่ยง" />
           <div className={styles.metricGrid}>
-            <Metric label="คุณภาพข้อมูล" value={analysis.scores.quality.score} suffix="/100" />
+            <Metric label="ความถูกต้องของข้อมูล (Data Integrity)" value={analysis.scores.quality.score} suffix="/100" />
             <Metric label="ความมั่นใจสูตร" value={null} text="ยังไม่มีข้อมูล" />
           </div>
         </Card>

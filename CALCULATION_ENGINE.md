@@ -2,7 +2,7 @@
 
 ทุกคะแนนอยู่ระหว่าง 0–100 และต้องคืน `reasons`, `warnings`, `components`, และ `availableWeight` เพื่อ audit ได้ ค่า `null` หมายถึงไม่มีข้อมูล ไม่ใช่ศูนย์
 
-## Q — Data Quality
+## Q — Data Integrity
 
 - Traceable source/structure 20
 - Candle completeness 60 (15 ต่อกรอบเวลาที่มีอย่างน้อย 50 แท่ง)
@@ -11,7 +11,7 @@
 
 `Q < 60` หยุด full conclusion และ entry/exit scenario; `60–74` วิเคราะห์พร้อมเตือน; `75+` ใช้ปกติ ความต่างราคาระหว่างแหล่งเกิน 1% เตือน และเกิน 2% หยุด technical score จนตรวจ session/split ได้
 
-Q วัดคุณภาพของข้อมูลที่มี ไม่ใช่ความครบของทุกโมดูล จึงต้องอ่านคู่กับ Coverage เสมอ ตัวอย่างข้อมูลราคาและแท่งเทียนครบ แต่ไม่มีงบ/ตลาด/ข่าว จะได้ Q=85 จาก 20+60+0+5 ขณะที่ Coverage ของ Fundamental, Market และ News เป็น 0% ห้ามตีความว่า Q=85 หมายถึงวิเคราะห์ครบ 85%
+Q วัดความถูกต้อง ความสด และความตรวจสอบย้อนกลับได้ของข้อมูลที่ได้รับ ไม่ใช่ความครบของทุกโมดูล จึงต้องแสดงชื่อว่า **Data Integrity** และอ่านคู่กับ Coverage เสมอ ตัวอย่างข้อมูลราคาและแท่งเทียนครบ แต่ไม่มีงบ/ตลาด/ข่าว อาจมี Integrity สูงได้ ขณะที่ Coverage ของ Fundamental, Market และ News ต่ำ ห้ามตีความว่า Integrity หมายถึงวิเคราะห์ครบ
 
 ## Coverage
 
@@ -32,6 +32,20 @@ Q วัดคุณภาพของข้อมูลที่มี ไม�
 - ATR/Bollinger 10
 
 Timeframe: 1D 40%, 4H 30%, 1H 20%, 15M 10%. คะแนนยืนยันใช้แท่งปิดแล้ว แท่งกำลังก่อตัวเป็น provisional เท่านั้น
+
+### Technical Snapshot
+
+ระบบส่งค่าตัวชี้วัดล่าสุดแยกตาม 15M, 1H, 4H และ 1D จาก OHLCV ชุดเดียวกับ Technical Score โดยไม่ใช้คะแนนเป็นค่าทดแทนและไม่เรียก Provider เพิ่ม:
+
+- EMA20 / EMA50 / EMA100 / EMA200
+- RSI14
+- MACD line / signal / histogram
+- ADX14
+- ATR14
+- Current Volume / Average Volume 20 / Volume Ratio
+- OBV
+
+จำนวนแท่งขั้นต่ำคือ EMA ตาม period, RSI14 15 แท่ง, MACD line 26 แท่ง, MACD signal/histogram 34 แท่ง, ATR14 14 แท่ง, ADX14 27 แท่ง และ Average Volume/Volume Ratio 20 แท่ง โดย ADX14 ใช้ค่า DX ที่พร้อมคำนวณจริง 14 ค่าแรกเป็น seed แล้วทำ Wilder smoothing ต่อ ค่าไม่พร้อมใช้ต้องเป็น `null` พร้อมเหตุผลราย field เช่นข้อมูลแท่งเทียนไม่พอหรือไม่มี Volume ค่า `0` ใช้ได้เฉพาะเมื่อเป็นผลคำนวณจริงเท่านั้น
 
 ## M — Market and sector
 
@@ -86,7 +100,13 @@ Clamp 0–100. Q และ Confidence ห้ามเป็นโบนัส
 - `partial`: โมดูลบังคับพร้อม แต่โมดูลประกอบบางส่วนขาด แสดงสถานะโดยไม่แสดงคะแนน
 - `insufficient`: โมดูลบังคับขาด แสดงสถานะโดยไม่แสดงคะแนน
 
-Short บังคับ Technical, Medium บังคับ Technical+Fundamental และ Long บังคับ Fundamental หาก F ไม่รองรับหรือ coverage ต่ำกว่า 50% ต้องไม่แอบแทนด้วยศูนย์หรือคะแนนกลาง
+เกณฑ์ Coverage ขั้นต่ำ:
+
+- Short: Technical 85%, Market 50%, News 50%, Fundamental 25%
+- Medium: Technical 70%, Market 50%, Fundamental 50%, News 25%
+- Long: Fundamental 70%, Technical 50%, Market 25%, News 25%
+
+Short บังคับ Technical, Medium บังคับ Technical+Fundamental และ Long บังคับ Fundamental หากหมวดบังคับต่ำกว่าเกณฑ์ให้แสดง `Insufficient` หากหมวดบังคับผ่านแต่หมวดเสริมต่ำกว่าเกณฑ์ให้แสดง `Partial` ทั้งสองกรณีห้ามสร้างคะแนน ห้ามแทนข้อมูลที่ขาดด้วยศูนย์หรือคะแนนกลาง
 
 ## Confidence
 

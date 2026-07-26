@@ -29,6 +29,7 @@ export async function requestJson<T>(
     try {
       const response = await fetchFn(url, {
         ...init,
+        redirect: init.redirect ?? "error",
         signal: init.signal ?? AbortSignal.timeout(timeoutMs),
       });
 
@@ -64,11 +65,11 @@ export async function requestJson<T>(
       }
 
       const statedSize = Number(response.headers.get("content-length") ?? "0");
-      if (statedSize > maxResponseBytes) throw oversizedResponseError();
-      const body = await response.text();
-      if (new TextEncoder().encode(body).byteLength > maxResponseBytes) {
+      if (statedSize > maxResponseBytes) {
+        await response.body?.cancel();
         throw oversizedResponseError();
       }
+      const body = await readBoundedText(response, maxResponseBytes);
       try {
         return JSON.parse(body) as T;
       } catch {
@@ -102,6 +103,33 @@ export async function requestJson<T>(
     502,
     true,
   );
+}
+
+async function readBoundedText(
+  response: Response,
+  maxResponseBytes: number,
+): Promise<string> {
+  if (!response.body) return "";
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let totalBytes = 0;
+  let text = "";
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      totalBytes += value.byteLength;
+      if (totalBytes > maxResponseBytes) {
+        await reader.cancel();
+        throw oversizedResponseError();
+      }
+      text += decoder.decode(value, { stream: true });
+    }
+    return text + decoder.decode();
+  } finally {
+    reader.releaseLock();
+  }
 }
 
 function oversizedResponseError(): AppError {

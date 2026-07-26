@@ -1,4 +1,5 @@
 import { adx, atr, ema, macd, obv, rsi } from "@/engine/indicators/indicators";
+import { calculateTechnicalSnapshots } from "@/engine/indicators/technical-snapshot";
 import type {
   AnalysisCoverage,
   HorizonAssessment,
@@ -7,11 +8,13 @@ import type {
   QualityResult,
   RiskResult,
   ScoreBreakdown,
+  TechnicalSnapshot,
 } from "@/types/analysis";
 import type {
   Candle,
   CompanyProfile,
   FinancialMetrics,
+  MarketContext,
   MarketEvent,
   Quote,
   Timeframe,
@@ -24,9 +27,12 @@ interface Snapshot {
   candles: Record<Timeframe, Candle[]>;
   fundamentals: FinancialMetrics | null;
   events: MarketEvent[];
+  marketContext?: MarketContext | null;
+  calculatedAt?: string;
 }
 
 export interface EngineResult {
+  technicalSnapshot: Record<Timeframe, TechnicalSnapshot>;
   technical: ScoreBreakdown;
   market: ScoreBreakdown;
   fundamental: ScoreBreakdown | null;
@@ -45,15 +51,22 @@ const timeframeWeight: Record<Timeframe, number> = {
 };
 
 export function analyzeSnapshot(snapshot: Snapshot): EngineResult {
+  const technicalSnapshot = calculateTechnicalSnapshots(
+    snapshot.candles,
+    snapshot.calculatedAt ?? snapshot.quote.provenance.asOf,
+  );
   const technical = scoreTechnical(snapshot.candles);
   const fundamental = snapshot.fundamentals
     ? scoreFundamental(snapshot.fundamentals)
     : null;
   const events = scoreEvents(snapshot.events);
-  const market = unavailableScore(
+  const unavailableMarket = unavailableScore(
     "MARKET_CONTEXT_PENDING",
     "ยังไม่มีบริบทตลาดและกลุ่มอุตสาหกรรมครบถ้วน",
   );
+  const market = snapshot.marketContext
+    ? scoreMarket(snapshot.marketContext)
+    : unavailableMarket;
   const coverage = scoreCoverage(technical, fundamental, market, events);
   const quality = scoreQuality(snapshot, coverage);
   const risk = scoreRisk(snapshot, technical, fundamental);
@@ -67,6 +80,7 @@ export function analyzeSnapshot(snapshot: Snapshot): EngineResult {
     coverage,
   );
   return {
+    technicalSnapshot,
     technical,
     market,
     fundamental,
@@ -314,6 +328,101 @@ function scoreFundamental(value: FinancialMetrics): ScoreBreakdown {
   };
 }
 
+function scoreMarket(context: MarketContext): ScoreBreakdown {
+  const components: Record<string, number | null> = {
+    relativeMarket: relativeStrength(
+      context.stockReturns,
+      context.benchmarkReturns,
+    ),
+    relativeSector: context.sectorSymbol
+      ? relativeStrength(context.stockReturns, context.sectorReturns)
+      : null,
+    marketTrend: trendScore(context.benchmarkTrend),
+    sectorTrend: context.sectorSymbol
+      ? trendScore(context.sectorTrend)
+      : null,
+    volatility:
+      context.volatilityPercentile === null
+        ? null
+        : clamp(100 - context.volatilityPercentile),
+  };
+  const weights: Record<string, number> = {
+    relativeMarket: 30,
+    relativeSector: 30,
+    marketTrend: 15,
+    sectorTrend: 15,
+    volatility: 10,
+  };
+  let weightedScore = 0;
+  let availableWeight = 0;
+  for (const [key, weight] of Object.entries(weights)) {
+    const value = components[key];
+    if (value === null) continue;
+    weightedScore += value * weight;
+    availableWeight += weight;
+  }
+
+  return {
+    score: availableWeight ? clamp(weightedScore / availableWeight) : null,
+    availableWeight,
+    reasons: [
+      {
+        code: "MARKET_RELATIVE_STRENGTH",
+        label: `เทียบกับ ${context.benchmarkSymbol}`,
+        impact: components.relativeMarket === null
+          ? 0
+          : round((components.relativeMarket - 50) / 10),
+      },
+      ...(context.sectorSymbol
+        ? [{
+            code: "SECTOR_RELATIVE_STRENGTH",
+            label: `เทียบกับกลุ่ม ${context.sectorSymbol}`,
+            impact: components.relativeSector === null
+              ? 0
+              : round((components.relativeSector - 50) / 10),
+          }]
+        : []),
+    ],
+    warnings: [
+      ...(context.sectorSymbol ? [] : ["ยังจับคู่ ETF กลุ่มอุตสาหกรรมไม่ได้"]),
+      ...(context.volatilityPercentile === null
+        ? ["ข้อมูลไม่พอสำหรับประเมินอันดับความผันผวน"]
+        : []),
+    ],
+    components,
+  };
+}
+
+function relativeStrength(
+  stock: MarketContext["stockReturns"],
+  comparison: MarketContext["benchmarkReturns"],
+): number | null {
+  const weights: Record<keyof MarketContext["stockReturns"], number> = {
+    "1d": 0.1,
+    "5d": 0.2,
+    "20d": 0.35,
+    "60d": 0.35,
+  };
+  let weightedDifference = 0;
+  let availableWeight = 0;
+  for (const period of Object.keys(weights) as Array<keyof typeof weights>) {
+    const stockReturn = stock[period];
+    const comparisonReturn = comparison[period];
+    if (stockReturn === null || comparisonReturn === null) continue;
+    weightedDifference += (stockReturn - comparisonReturn) * weights[period];
+    availableWeight += weights[period];
+  }
+  if (!availableWeight) return null;
+  return clamp(50 + (weightedDifference / availableWeight) * 3);
+}
+
+function trendScore(trend: MarketContext["benchmarkTrend"]): number | null {
+  if (trend === "up") return 85;
+  if (trend === "sideways") return 50;
+  if (trend === "down") return 15;
+  return null;
+}
+
 function scoreEvents(events: MarketEvent[]): ScoreBreakdown {
   if (!events.length) {
     return unavailableScore(
@@ -540,6 +649,7 @@ function scoreHorizons(
       risk.penalty,
       { technical: 0.5, market: 0.2, news: 0.2, fundamental: 0.1 },
       ["technical"],
+      { technical: 85, market: 50, news: 50, fundamental: 25 },
     ),
     medium: horizonAssessment(
       values,
@@ -547,6 +657,7 @@ function scoreHorizons(
       risk.penalty,
       { technical: 0.35, market: 0.2, fundamental: 0.3, news: 0.15 },
       ["technical", "fundamental"],
+      { technical: 70, market: 50, fundamental: 50, news: 25 },
     ),
     long: horizonAssessment(
       values,
@@ -554,6 +665,7 @@ function scoreHorizons(
       risk.penalty,
       { fundamental: 0.6, technical: 0.15, market: 0.1, news: 0.15 },
       ["fundamental"],
+      { fundamental: 70, technical: 50, market: 25, news: 25 },
     ),
   };
 }
@@ -564,9 +676,14 @@ function horizonAssessment(
   penalty: number,
   weights: Partial<Record<keyof AnalysisCoverage, number>>,
   required: Array<keyof AnalysisCoverage>,
+  minimumCoverage: Partial<Record<keyof AnalysisCoverage, number>>,
 ): HorizonAssessment {
   const missingModules = (Object.keys(weights) as Array<keyof AnalysisCoverage>)
-    .filter((module) => values[module] === null || coverage[module].percent < 50);
+    .filter(
+      (module) =>
+        values[module] === null ||
+        coverage[module].percent < (minimumCoverage[module] ?? 100),
+    );
   if (required.some((module) => missingModules.includes(module))) {
     return insufficientAssessment(missingModules);
   }

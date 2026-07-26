@@ -1,18 +1,29 @@
 # MarketLens Progress
 
-Last updated: 2026-07-25 (Asia/Bangkok)
+Last updated: 2026-07-26 (Asia/Bangkok)
 
-| Workstream | Status | Evidence |
-|---|---|---|
-| Live provider baseline | Completed | Preview env 6 names SET; Twelve Data works; Finnhub 401; SEC ~3.75 MB; Gemini model 404; Stooq HTML challenge |
-| Finnhub auth hardening | Completed locally | `X-Finnhub-Token` regression test |
-| Gemini model discovery | Completed locally | discovery, stable Flash selection, model 404 and hallucinated-number fallback tests |
-| SEC Company Facts boundary | Completed locally | >1 MB success, >6 MiB reject, JSON/content/redirect checks |
-| Coverage and horizon truthfulness | Completed locally | Q=85 explanation, module coverage, nullable unavailable scores, Partial/Insufficient horizons |
-| Stooq validation | Completed locally | real response identified as HTML challenge; parser rejects unusable backup |
-| Dependency triage | In progress | Next.js 16.2.11 installed; 11 High package nodes remain from 2 root advisory chains |
-| Local verification | Completed | lint, typecheck, 30 Vitest files/68 tests, scanner 4/4, E2E 4/4, build, secret scan |
-| Live Preview verification | Pending | ต้อง Commit/Push และ Deploy Preview หลังเอกสารพร้อม |
+| Workstream                        | Status            | Evidence                                                                                                      |
+| --------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------- |
+| Live provider baseline            | Completed         | Preview env 6 names SET; Twelve Data works; Finnhub 401; SEC ~3.75 MB; Gemini model 404; Stooq HTML challenge |
+| Finnhub auth hardening            | Completed locally | `X-Finnhub-Token` regression test                                                                             |
+| Gemini model discovery            | Completed locally | discovery, stable Flash selection, model 404 and hallucinated-number fallback tests                           |
+| SEC Company Facts boundary        | Completed locally | >1 MB success, >6 MiB reject, JSON/content/redirect checks                                                    |
+| Coverage and horizon truthfulness | Completed locally | Q=85 explanation, module coverage, nullable unavailable scores, Partial/Insufficient horizons                 |
+| Stooq validation                  | Completed locally | real response identified as HTML challenge; parser rejects unusable backup                                    |
+| Dependency triage                 | In progress       | Next.js 16.2.11 installed; 11 High package nodes remain from 2 root advisory chains                           |
+| Local verification                | Completed         | lint, typecheck, 30 Vitest files/68 tests, scanner 4/4, E2E 4/4, build, secret scan                           |
+| Live Preview verification         | Pending           | ต้อง Commit/Push และ Deploy Preview หลังเอกสารพร้อม                                                           |
+
+## Technical Indicator Snapshot 2026-07-26
+
+- Root cause: indicator engine คำนวณค่าจาก OHLCV เพื่อสร้าง Technical Score แล้วทิ้งค่าราย indicator; `AnalysisResponse` ไม่มี Snapshot และ `ChartPanel` จึงใช้ Placeholder
+- เพิ่ม `technicalSnapshot` ครบ 15M, 1H, 4H และ 1D จาก OHLCV เดิมโดยไม่มี Twelve Data call สำหรับ indicator เพิ่ม
+- รองรับ EMA20/50/100/200, RSI14, MACD line/signal/histogram, ADX14, ATR14, Current/Average20/Ratio Volume และ OBV
+- Missing Data เป็น `null` พร้อมเหตุผลราย field ไม่ใช้ศูนย์แทน
+- UI ใช้ timeframe state เดียวกันเลือกทั้งกราฟและ Snapshot พร้อมคำอธิบายภาษาไทย
+- Local verification รอบสุดท้าย: lint ผ่าน, typecheck ผ่าน, Vitest 38 files / 111 tests ผ่าน, Secret-scan regression 4/4 ผ่าน, Playwright mobile/desktop 4/4 ผ่าน, production build ผ่าน และ secret scan ผ่าน (155 current files, 8 commits, 1073 history blobs)
+- รีวิวอิสระรอบสองไม่พบ Critical หรือ Important ที่เหลือใน ADX Wilder seed, Snapshot แยกตาม Timeframe, Missing reason และ Analysis Response Schema
+- Commit/Push/Preview verification: รอดำเนินการหลัง final review
 
 ## Local verification 2026-07-25
 

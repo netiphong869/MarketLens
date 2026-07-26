@@ -10,6 +10,7 @@ export class AnalysisService {
   async analyze(rawSymbol: string, clientId: string): Promise<AnalysisResult> {
     const symbol = normalizeSymbol(rawSymbol); const key = `analysis:${symbol}`; const cached = this.dependencies.cache.get(key);
     if (cached) return { data: cached, cached: true, usage: this.dependencies.usage.status(clientId) };
+    this.dependencies.usage.assertAvailable(clientId);
     const data = await this.dependencies.build(symbol);
     this.dependencies.cache.set(key, data, this.dependencies.ttlSeconds);
     return { data, cached: false, usage: this.dependencies.usage.commitSuccess(clientId) };

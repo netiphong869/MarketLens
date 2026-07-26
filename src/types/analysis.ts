@@ -2,6 +2,7 @@ import type {
   Candle,
   CompanyProfile,
   FinancialMetrics,
+  MarketContext,
   MarketEvent,
   Quote,
   Timeframe,
@@ -70,6 +71,44 @@ export interface HorizonScores {
   long: HorizonAssessment;
 }
 
+export type TechnicalSnapshotMetric =
+  | "latestClose"
+  | "ema20"
+  | "ema50"
+  | "ema100"
+  | "ema200"
+  | "rsi14"
+  | "macdLine"
+  | "macdSignal"
+  | "macdHistogram"
+  | "adx14"
+  | "atr14"
+  | "currentVolume"
+  | "averageVolume20"
+  | "volumeRatio"
+  | "obv";
+
+export interface TechnicalSnapshot {
+  timeframe: Timeframe;
+  latestClose: number | null;
+  ema20: number | null;
+  ema50: number | null;
+  ema100: number | null;
+  ema200: number | null;
+  rsi14: number | null;
+  macdLine: number | null;
+  macdSignal: number | null;
+  macdHistogram: number | null;
+  adx14: number | null;
+  atr14: number | null;
+  currentVolume: number | null;
+  averageVolume20: number | null;
+  volumeRatio: number | null;
+  obv: number | null;
+  calculatedAt: string;
+  unavailable: Partial<Record<TechnicalSnapshotMetric, string>>;
+}
+
 export interface PriceZone {
   low: number;
   high: number;
@@ -97,7 +136,12 @@ export interface AnalysisSummary {
 }
 
 export interface ProviderIssue {
-  provider: "SEC EDGAR" | "Finnhub" | "Gemini" | "Stooq";
+  provider:
+    | "SEC EDGAR"
+    | "Finnhub"
+    | "Gemini"
+    | "Stooq"
+    | "Twelve Data Market";
   code:
     | "AUTH_ERROR"
     | "RATE_LIMITED"
@@ -116,8 +160,10 @@ export interface AnalysisResponse {
   quote: Quote;
   profile: CompanyProfile;
   candles: Record<Timeframe, Candle[]>;
+  technicalSnapshot: Record<Timeframe, TechnicalSnapshot>;
   fundamentals: FinancialMetrics | null;
   events: MarketEvent[];
+  marketContext: MarketContext | null;
   scores: {
     technical: ScoreBreakdown;
     market: ScoreBreakdown;

@@ -14,4 +14,13 @@ describe("mock analysis fixtures", () => {
     expect(interval("4h")).toBe(4 * 60 * 60 * 1000);
     expect(interval("1d")).toBe(24 * 60 * 60 * 1000);
   });
+
+  it("uses distinct OHLCV patterns so each timeframe has its own snapshot values", () => {
+    const analysis = createMockAnalysisResponse();
+    const latestCloses = (["15m", "1h", "4h", "1d"] as const).map(
+      (timeframe) => analysis.technicalSnapshot[timeframe].latestClose,
+    );
+
+    expect(new Set(latestCloses).size).toBe(4);
+  });
 });

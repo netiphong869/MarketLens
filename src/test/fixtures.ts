@@ -1,4 +1,5 @@
 import type { AnalysisResponse } from "@/types/analysis";
+import { calculateTechnicalSnapshots } from "@/engine/indicators/technical-snapshot";
 import type { Candle, Timeframe } from "@/types/market";
 
 const provenance = {
@@ -25,6 +26,12 @@ function candles(timeframe: Timeframe): Candle[] {
 export function makeAnalysisResponse(
   overrides: Partial<AnalysisResponse> = {},
 ): AnalysisResponse {
+  const candleFrames = {
+    "15m": candles("15m"),
+    "1h": candles("1h"),
+    "4h": candles("4h"),
+    "1d": candles("1d"),
+  };
   const response: AnalysisResponse = {
     symbol: "FN",
     mode: "mock",
@@ -50,12 +57,11 @@ export function makeAnalysisResponse(
       description: "ผู้ให้บริการด้านการผลิตอุปกรณ์อิเล็กทรอนิกส์และโฟโตนิกส์",
       provenance,
     },
-    candles: {
-      "15m": candles("15m"),
-      "1h": candles("1h"),
-      "4h": candles("4h"),
-      "1d": candles("1d"),
-    },
+    candles: candleFrames,
+    technicalSnapshot: calculateTechnicalSnapshots(
+      candleFrames,
+      "2026-07-18T10:00:00.000Z",
+    ),
     fundamentals: {
       revenueGrowthYoY: 14.2,
       revenueGrowthThreeYear: 11.8,
@@ -89,6 +95,17 @@ export function makeAnalysisResponse(
         provenance,
       },
     ],
+    marketContext: {
+      benchmarkSymbol: "SPY",
+      sectorSymbol: "XLK",
+      stockReturns: { "1d": 1.2, "5d": 3.4, "20d": 8.1, "60d": 14.2 },
+      benchmarkReturns: { "1d": 0.6, "5d": 2.1, "20d": 5.2, "60d": 9.5 },
+      sectorReturns: { "1d": 0.9, "5d": 2.8, "20d": 6.7, "60d": 11.8 },
+      benchmarkTrend: "up",
+      sectorTrend: "up",
+      volatilityPercentile: 42,
+      provenance,
+    },
     scores: {
       technical: {
         score: 58,
